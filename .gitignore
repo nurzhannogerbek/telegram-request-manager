@@ -32,16 +32,14 @@ ENV/
 env.bak/
 venv.bak/
 
+# Terraform
+*.tfstate
+*.tfstate.backup
+.terraform/
+.terraform.lock.hcl
+
 # Jupyter Notebook checkpoints
 .ipynb_checkpoints
-
-# Golang
-*.exe
-*.test
-*.out
-*.mod
-*.sum
-vendor/
 
 # IDEs and Editors
 .idea/
@@ -65,10 +63,29 @@ vendor/
 *.undo
 *.trace
 
-# Git
-.git/
-
 # System Files
 Thumbs.db
 Desktop.ini
 ehthumbs.db
+
+# AWS CLI and Credentials
+.aws/
+*.pem
+*.key
+
+# Deployment Artifacts
+*.zip
+*.tar.gz
+*.rar
+*.7z
+output/
+
+# Secrets and Configurations
+terraform.tfvars
+terraform.tfvars.json
+
+# CI/CD
+coverage/
+*.lcov
+.nyc_output
+pytest_cache/
