@@ -1,0 +1,85 @@
+name: Deploy to AWS # Workflow name, visible in GitHub Actions interface.
+
+on:
+  push:
+    branches:
+      - main # Trigger this workflow when code is pushed to the 'main' branch.
+  workflow_dispatch: # Allow manual triggering for deployment through the GitHub Actions interface.
+
+env: # Common AWS credentials and settings shared across all jobs.
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }} # AWS Access Key ID stored in GitHub Secrets.
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }} # AWS Secret Access Key stored in GitHub Secrets.
+  AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }} # AWS region where resources will be deployed.
+
+jobs:
+  deploy-test:
+    name: Deploy to Test Environment # Job to deploy the test environment.
+    runs-on: ubuntu-latest # Use the latest Ubuntu runner provided by GitHub.
+
+    steps:
+      - name: Restore Terraform Cache # Step to restore cached Terraform files.
+        uses: actions/cache@v3 # GitHub's official caching action.
+        with:
+          path: |
+            ~/.terraform.d/plugins
+            .terraform
+          key: ${{ runner.os }}-terraform-${{ hashFiles('**/*.tf') }} # Unique cache key based on OS and .tf files.
+          restore-keys: |
+            ${{ runner.os }}-terraform-
+
+      - name: Checkout code # Step to pull the repository code into the runner.
+        uses: actions/checkout@v3 # Official GitHub action to check out repository code.
+
+      - name: Setup Terraform # Install Terraform CLI only if needed.
+        uses: hashicorp/setup-terraform@v2 # Official Terraform GitHub Action.
+        with:
+          terraform_version: 1.5.0 # Specify the version of Terraform to use.
+
+      - name: Terraform Init and Apply (Test) # Apply the Terraform configuration for the test environment.
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TEST_TELEGRAM_BOT_TOKEN }} # Test Telegram bot token.
+          ADMIN_CHAT_ID: ${{ secrets.TEST_ADMIN_CHAT_ID }} # Test admin chat ID.
+          GOOGLE_SHEET_ID: ${{ secrets.TEST_GOOGLE_SHEET_ID }} # Test Google Sheet ID.
+        run: |
+          terraform init -backend-config="key=test/terraform.tfstate"
+          terraform apply \
+            -var-file=environments/test/terraform.tfvars \
+            -var="aws_region=${{ secrets.AWS_DEFAULT_REGION }}" \
+            -auto-approve
+
+  deploy-prod:
+    name: Deploy to Production Environment # Job to deploy the production environment.
+    needs: deploy-test # Ensure this job runs only after the test deployment succeeds.
+    runs-on: ubuntu-latest # Use the latest Ubuntu runner.
+    if: false # Skip this job entirely.
+
+    steps:
+      - name: Restore Terraform Cache # Step to restore cached Terraform files.
+        uses: actions/cache@v3 # GitHub's official caching action.
+        with:
+          path: |
+            ~/.terraform.d/plugins
+            .terraform
+          key: ${{ runner.os }}-terraform-${{ hashFiles('**/*.tf') }} # Unique cache key based on OS and .tf files.
+          restore-keys: |
+            ${{ runner.os }}-terraform-
+
+      - name: Checkout code # Step to pull the repository code into the runner.
+        uses: actions/checkout@v3 # Official GitHub action to check out repository code.
+
+      - name: Setup Terraform # Install Terraform CLI only if needed.
+        uses: hashicorp/setup-terraform@v2 # Official Terraform GitHub Action.
+        with:
+          terraform_version: 1.5.0 # Specify the version of Terraform to use.
+
+      - name: Terraform Init and Apply (Prod) # Apply the Terraform configuration for the production environment.
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.PROD_TELEGRAM_BOT_TOKEN }} # Production Telegram bot token.
+          ADMIN_CHAT_ID: ${{ secrets.PROD_ADMIN_CHAT_ID }} # Production admin chat ID.
+          GOOGLE_SHEET_ID: ${{ secrets.PROD_GOOGLE_SHEET_ID }} # Production Google Sheet ID.
+        run: |
+          terraform init -backend-config="key=prod/terraform.tfstate"
+          terraform apply \
+            -var-file=environments/prod/terraform.tfvars \
+            -var="aws_region=${{ secrets.AWS_DEFAULT_REGION }}" \
+            -auto-approve

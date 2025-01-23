@@ -80,10 +80,6 @@ ehthumbs.db
 *.7z
 output/
 
-# Secrets and Configurations
-terraform.tfvars
-terraform.tfvars.json
-
 # CI/CD
 coverage/
 *.lcov

@@ -1,10 +1,10 @@
 provider "aws" {
-  region = "us-east-1" # Specify your AWS region.
+  region = var.aws_region # Use the AWS region from the variable.
 }
 
-# IAM Role for Lambda.
+# Define the IAM role for the Lambda function.
 resource "aws_iam_role" "lambda_role" {
-  name = "${var.environment}_telegram_bot_lambda_role" # Include environment in the name.
+  name = "${var.project_name}_${var.environment}_aws-iam-role_telegram-bot"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -20,7 +20,7 @@ resource "aws_iam_role" "lambda_role" {
   })
 }
 
-# Attach policies to the IAM Role.
+# Attach the AWS managed policy for basic Lambda execution to the IAM role.
 resource "aws_iam_role_policy_attachment" "lambda_policy_attachment" {
   role       = aws_iam_role.lambda_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
@@ -28,45 +28,44 @@ resource "aws_iam_role_policy_attachment" "lambda_policy_attachment" {
 
 # Define the Lambda function.
 resource "aws_lambda_function" "telegram_bot" {
-  function_name = "${var.environment}_telegram_bot_function" # Include environment in the name.
+  function_name = "${var.project_name}_${var.environment}_aws-lambda-function_telegram-bot"
   role          = aws_iam_role.lambda_role.arn
   handler       = "lambda_function.lambda_handler"
-  runtime       = "python3.9"
-  filename      = "${path.module}/telegram_bot.zip" # Path to the deployment package.
+  runtime       = "python3.13"
+  filename      = "${path.module}/telegram_bot.zip"
 
-  # Environment variables for Lambda.
   environment {
     variables = {
-      TELEGRAM_BOT_TOKEN        = var.telegram_bot_token
-      ADMIN_CHAT_ID             = var.admin_chat_id
-      GOOGLE_SHEET_ID           = var.google_sheet_id
-      SERVICE_ACCOUNT_TYPE      = var.service_account_type
-      SERVICE_ACCOUNT_PROJECT_ID = var.service_account_project_id
-      SERVICE_ACCOUNT_PRIVATE_KEY_ID = var.service_account_private_key_id
-      SERVICE_ACCOUNT_PRIVATE_KEY = var.service_account_private_key
-      SERVICE_ACCOUNT_CLIENT_EMAIL = var.service_account_client_email
-      SERVICE_ACCOUNT_CLIENT_ID = var.service_account_client_id
-      SERVICE_ACCOUNT_AUTH_URI  = var.service_account_auth_uri
-      SERVICE_ACCOUNT_TOKEN_URI = var.service_account_token_uri
-      SERVICE_ACCOUNT_AUTH_PROVIDER_CERT_URL = var.service_account_auth_provider_cert_url
-      SERVICE_ACCOUNT_CLIENT_CERT_URL = var.service_account_client_cert_url
+      TELEGRAM_BOT_TOKEN                        = var.telegram_bot_token
+      ADMIN_CHAT_ID                             = var.admin_chat_id
+      GOOGLE_SHEET_ID                           = var.google_sheet_id
+      SERVICE_ACCOUNT_TYPE                      = var.service_account_type
+      SERVICE_ACCOUNT_PROJECT_ID                = var.service_account_project_id
+      SERVICE_ACCOUNT_PRIVATE_KEY_ID            = var.service_account_private_key_id
+      SERVICE_ACCOUNT_PRIVATE_KEY               = var.service_account_private_key
+      SERVICE_ACCOUNT_CLIENT_EMAIL              = var.service_account_client_email
+      SERVICE_ACCOUNT_CLIENT_ID                 = var.service_account_client_id
+      SERVICE_ACCOUNT_AUTH_URI                  = var.service_account_auth_uri
+      SERVICE_ACCOUNT_TOKEN_URI                 = var.service_account_token_uri
+      SERVICE_ACCOUNT_AUTH_PROVIDER_CERT_URL    = var.service_account_auth_provider_cert_url
+      SERVICE_ACCOUNT_CLIENT_CERT_URL           = var.service_account_client_cert_url
     }
   }
 }
 
-# API Gateway setup.
+# Define the API Gateway for handling incoming HTTP POST requests.
 resource "aws_api_gateway_rest_api" "telegram_bot_api" {
-  name = "${var.environment}_telegram_bot_api" # Include environment in the name.
+  name = "${var.project_name}_${var.environment}_aws-api-gateway-rest-api_telegram-bot"
 }
 
-# API resource for /telegram-bot.
+# Define the API resource for the /telegram-bot path.
 resource "aws_api_gateway_resource" "telegram_bot_resource" {
   rest_api_id = aws_api_gateway_rest_api.telegram_bot_api.id
   parent_id   = aws_api_gateway_rest_api.telegram_bot_api.root_resource_id
   path_part   = "telegram-bot"
 }
 
-# API POST method for /telegram-bot.
+# Create an HTTP POST method for the /telegram-bot resource.
 resource "aws_api_gateway_method" "telegram_bot_post_method" {
   rest_api_id   = aws_api_gateway_rest_api.telegram_bot_api.id
   resource_id   = aws_api_gateway_resource.telegram_bot_resource.id
@@ -74,7 +73,7 @@ resource "aws_api_gateway_method" "telegram_bot_post_method" {
   authorization = "NONE"
 }
 
-# Integration of POST method with Lambda.
+# Integrate the POST method with the Lambda function.
 resource "aws_api_gateway_integration" "telegram_bot_post_integration" {
   rest_api_id = aws_api_gateway_rest_api.telegram_bot_api.id
   resource_id = aws_api_gateway_resource.telegram_bot_resource.id
@@ -84,14 +83,14 @@ resource "aws_api_gateway_integration" "telegram_bot_post_integration" {
   uri         = aws_lambda_function.telegram_bot.invoke_arn
 }
 
-# API Deployment.
+# Deploy the API Gateway.
 resource "aws_api_gateway_deployment" "telegram_bot_deployment" {
   rest_api_id = aws_api_gateway_rest_api.telegram_bot_api.id
   depends_on  = [aws_api_gateway_integration.telegram_bot_post_integration]
   stage_name  = var.api_stage_name
 }
 
-# Allow API Gateway to invoke Lambda.
+# Grant API Gateway permission to invoke the Lambda function.
 resource "aws_lambda_permission" "allow_api_gateway" {
   statement_id  = "AllowExecutionFromAPIGateway"
   action        = "lambda:InvokeFunction"
@@ -102,6 +101,6 @@ resource "aws_lambda_permission" "allow_api_gateway" {
 
 # Output the API Gateway URL.
 output "api_gateway_url" {
-  value = aws_api_gateway_deployment.telegram_bot_deployment.invoke_url
+  value       = aws_api_gateway_deployment.telegram_bot_deployment.invoke_url
   description = "The URL for the API Gateway endpoint."
 }
