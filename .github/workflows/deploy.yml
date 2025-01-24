@@ -1,99 +1,103 @@
-name: Deploy to AWS # Workflow name, visible in GitHub Actions interface.
+name: Deploy to AWS # The name of the GitHub Actions workflow, visible in the GitHub Actions interface.
 
 on:
   push:
     branches:
-      - main # Trigger this workflow when code is pushed to the 'main' branch.
-  workflow_dispatch: # Allow manual triggering for deployment through the GitHub Actions interface.
+      - main # This triggers the workflow whenever code is pushed to the 'main' branch.
+  workflow_dispatch: # Allows manual execution of the workflow from the GitHub Actions interface.
 
-env: # Common AWS credentials and settings shared across all jobs.
-  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }} # AWS Access Key ID stored in GitHub Secrets.
-  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }} # AWS Secret Access Key stored in GitHub Secrets.
-  AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }} # AWS region where resources will be deployed.
+env:
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }} # AWS Access Key, securely stored in GitHub Secrets.
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }} # AWS Secret Key, securely stored in GitHub Secrets.
+  AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }} # AWS region where the infrastructure is deployed.
 
 jobs:
+  # Deploy to Test Environment.
   deploy-test:
-    name: Deploy to Test Environment # Job to deploy the test environment.
-    runs-on: ubuntu-latest # Use the latest Ubuntu runner provided by GitHub.
+    name: Deploy to Test Environment # Job name for deploying to the test environment.
+    runs-on: ubuntu-latest # Use the latest Ubuntu virtual machine provided by GitHub Actions.
 
     steps:
-      - name: Checkout code # Step to pull the repository code into the runner.
-        uses: actions/checkout@v3 # Official GitHub action to check out repository code.
+      # Step 1: Check out the code.
+      - name: Checkout code # A descriptive name for the step.
+        uses: actions/checkout@v3 # Official GitHub Action to clone the repository into the runner.
 
-      - name: Setup Terraform # Install Terraform CLI for managing infrastructure.
+      # Step 2: Setup Terraform.
+      - name: Setup Terraform # Install and configure the Terraform CLI in the GitHub Actions environment.
         uses: hashicorp/setup-terraform@v2 # Official Terraform GitHub Action.
         with:
-          terraform_version: 1.5.0 # Specify the version of Terraform to use.
+          terraform_version: 1.5.0 # Specify the version of Terraform to install and use.
 
-      - name: Install dependencies and package Lambda function # Prepare Lambda deployment package.
-        working-directory: lambdas/telegram_bot # Move to the Lambda directory.
+      # Step 3: Prepare the Lambda function package.
+      - name: Install dependencies and package Lambda function # This step creates the zip file for the Lambda function.
+        working-directory: lambdas/telegram_bot # Navigate to the Lambda function directory.
         run: |
-          # Install Python dependencies
-          pip install -r requirements.txt -t . 
-          
-          # Copy shared directory into the Lambda directory
-          cp -r ../../shared . 
-          
-          # Create a zip package including all files and dependencies
-          zip -r ../../deployment/terraform/telegram_bot.zip . 
+          rm -f ../../deployment/terraform/telegram_bot.zip
+          pip install -r requirements.txt -t .
+          cp -r ../../shared .
+          zip -r ../../deployment/terraform/telegram_bot.zip .
+          sha256sum ../../deployment/terraform/telegram_bot.zip > ../../deployment/terraform/telegram_bot.zip.sha256
 
-      - name: Terraform Init and Apply (Test) # Apply the Terraform configuration for the test environment.
+      # Step 4: Apply the Terraform configuration for the test environment.
+      - name: Terraform Init and Apply (Test) # Initialize and apply the Terraform configuration for the test environment.
         env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TEST_TELEGRAM_BOT_TOKEN }} # Test Telegram bot token.
-          ADMIN_CHAT_ID: ${{ secrets.TEST_ADMIN_CHAT_ID }} # Test admin chat ID.
-          GOOGLE_SHEET_ID: ${{ secrets.TEST_GOOGLE_SHEET_ID }} # Test Google Sheet ID.
-        working-directory: deployment/terraform # Set the working directory for Terraform commands.
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TEST_TELEGRAM_BOT_TOKEN }} # Test environment-specific token for the bot.
+          ADMIN_CHAT_ID: ${{ secrets.TEST_ADMIN_CHAT_ID }} # Test admin chat ID to handle notifications.
+          GOOGLE_SHEET_ID: ${{ secrets.TEST_GOOGLE_SHEET_ID }} # Test Google Sheet ID for storing responses.
+        working-directory: deployment/terraform # Set the working directory to where Terraform files are located.
         run: |
-          terraform init \
+          terraform init \ # Initialize the Terraform backend with the test environment configuration.
             -backend-config="bucket=telegram-request-manager-test-terraform-state" \
             -backend-config="key=test/terraform.tfstate" \
             -backend-config="region=${{ secrets.AWS_DEFAULT_REGION }}" \
             -backend-config="encrypt=true"
-          terraform apply \
-            -var-file=environments/test/terraform.tfvars \
-            -var="aws_region=${{ secrets.AWS_DEFAULT_REGION }}" \
-            -auto-approve
+          terraform apply \ # Apply the Terraform configuration to deploy/update resources.
+            -var-file=environments/test/terraform.tfvars \ # Use the test environment-specific variables.
+            -var="aws_region=${{ secrets.AWS_DEFAULT_REGION }}" \ # Specify the AWS region for the deployment.
+            -auto-approve # Automatically approve the Terraform plan and apply changes without manual input.
 
+  # Deploy to Production Environment.
   deploy-prod:
-    name: Deploy to Production Environment # Job to deploy the production environment.
+    name: Deploy to Production Environment # Job name for deploying to the production environment.
     needs: deploy-test # Ensure this job runs only after the test deployment succeeds.
-    runs-on: ubuntu-latest # Use the latest Ubuntu runner.
-    if: false # Temporarily disable production deployment.
+    runs-on: ubuntu-latest # Use the latest Ubuntu virtual machine provided by GitHub Actions.
+    if: false # Temporarily disable the production deployment.
 
     steps:
-      - name: Checkout code # Step to pull the repository code into the runner.
-        uses: actions/checkout@v3 # Official GitHub action to check out repository code.
+      # Step 1: Check out the code.
+      - name: Checkout code # A descriptive name for the step.
+        uses: actions/checkout@v3 # Official GitHub Action to clone the repository into the runner.
 
-      - name: Setup Terraform # Install Terraform CLI for managing infrastructure.
+      # Step 2: Setup Terraform.
+      - name: Setup Terraform # Install and configure the Terraform CLI in the GitHub Actions environment.
         uses: hashicorp/setup-terraform@v2 # Official Terraform GitHub Action.
         with:
-          terraform_version: 1.5.0 # Specify the version of Terraform to use.
+          terraform_version: 1.5.0 # Specify the version of Terraform to install and use.
 
-      - name: Install dependencies and package Lambda function # Prepare Lambda deployment package.
-        working-directory: lambdas/telegram_bot # Move to the Lambda directory.
+      # Step 3: Prepare the Lambda function package.
+      - name: Install dependencies and package Lambda function # This step creates the zip file for the Lambda function.
+        working-directory: lambdas/telegram_bot # Navigate to the Lambda function directory.
         run: |
-          # Install Python dependencies
-          pip install -r requirements.txt -t . 
-          
-          # Copy shared directory into the Lambda directory
-          cp -r ../../shared . 
-          
-          # Create a zip package including all files and dependencies
-          zip -r ../../deployment/terraform/telegram_bot.zip . 
+          rm -f ../../deployment/terraform/telegram_bot.zip
+          pip install -r requirements.txt -t .
+          cp -r ../../shared .
+          zip -r ../../deployment/terraform/telegram_bot.zip .
+          sha256sum ../../deployment/terraform/telegram_bot.zip > ../../deployment/terraform/telegram_bot.zip.sha256
 
-      - name: Terraform Init and Apply (Prod) # Apply the Terraform configuration for the production environment.
+      # Step 4: Apply the Terraform configuration for the production environment.
+      - name: Terraform Init and Apply (Prod) # Initialize and apply the Terraform configuration for the production environment.
         env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.PROD_TELEGRAM_BOT_TOKEN }} # Production Telegram bot token.
-          ADMIN_CHAT_ID: ${{ secrets.PROD_ADMIN_CHAT_ID }} # Production admin chat ID.
-          GOOGLE_SHEET_ID: ${{ secrets.PROD_GOOGLE_SHEET_ID }} # Production Google Sheet ID.
-        working-directory: deployment/terraform # Set the working directory for Terraform commands.
+          TELEGRAM_BOT_TOKEN: ${{ secrets.PROD_TELEGRAM_BOT_TOKEN }} # Production environment-specific token for the bot.
+          ADMIN_CHAT_ID: ${{ secrets.PROD_ADMIN_CHAT_ID }} # Production admin chat ID to handle notifications.
+          GOOGLE_SHEET_ID: ${{ secrets.PROD_GOOGLE_SHEET_ID }} # Production Google Sheet ID for storing responses.
+        working-directory: deployment/terraform # Set the working directory to where Terraform files are located.
         run: |
-          terraform init \
+          terraform init \ # Initialize the Terraform backend with the production environment configuration.
             -backend-config="bucket=telegram-request-manager-prod-terraform-state" \
             -backend-config="key=prod/terraform.tfstate" \
             -backend-config="region=${{ secrets.AWS_DEFAULT_REGION }}" \
             -backend-config="encrypt=true"
-          terraform apply \
-            -var-file=environments/prod/terraform.tfvars \
-            -var="aws_region=${{ secrets.AWS_DEFAULT_REGION }}" \
-            -auto-approve
+          terraform apply \ # Apply the Terraform configuration to deploy/update resources.
+            -var-file=environments/prod/terraform.tfvars \ # Use the production environment-specific variables.
+            -var="aws_region=${{ secrets.AWS_DEFAULT_REGION }}" \ # Specify the AWS region for the deployment.
+            -auto-approve # Automatically approve the Terraform plan and apply changes without manual input.
