@@ -113,7 +113,7 @@ output "api_gateway_url" {
 
 terraform {
   backend "s3" {
-    bucket         = "${var.project_name}_${var.environment}_terraform-state"
+    bucket         = "${var.project_name}-${var.environment}-terraform-state"
     key            = "${var.environment}/terraform.tfstate"
     region         = var.aws_region
     encrypt        = true

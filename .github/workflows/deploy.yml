@@ -32,7 +32,7 @@ jobs:
           GOOGLE_SHEET_ID: ${{ secrets.TEST_GOOGLE_SHEET_ID }} # Test Google Sheet ID.
         working-directory: deployment/terraform # Set the working directory for Terraform commands.
         run: |
-          terraform init -backend-config="bucket=telegram-request-manager-terraform-state" \
+          terraform init -backend-config="bucket=telegram-request-manager-test-terraform-state" \
                          -backend-config="key=test/terraform.tfstate" \
                          -backend-config="region=${{ secrets.AWS_DEFAULT_REGION }}" \
                          -backend-config="encrypt=true"
@@ -62,7 +62,7 @@ jobs:
           GOOGLE_SHEET_ID: ${{ secrets.PROD_GOOGLE_SHEET_ID }} # Production Google Sheet ID.
         working-directory: deployment/terraform # Set the working directory for Terraform commands.
         run: |
-          terraform init -backend-config="bucket=telegram-request-manager-terraform-state" \
+          terraform init -backend-config="bucket=telegram-request-manager-prod-terraform-state" \
                          -backend-config="key=prod/terraform.tfstate" \
                          -backend-config="region=${{ secrets.AWS_DEFAULT_REGION }}" \
                          -backend-config="encrypt=true"
