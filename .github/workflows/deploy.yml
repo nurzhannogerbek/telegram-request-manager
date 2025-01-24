@@ -46,15 +46,15 @@ jobs:
           GOOGLE_SHEET_ID: ${{ secrets.TEST_GOOGLE_SHEET_ID }} # Test Google Sheet ID for storing responses.
         working-directory: deployment/terraform # Set the working directory to where Terraform files are located.
         run: |
-          terraform init \ # Initialize the Terraform backend with the test environment configuration.
+          terraform init \
             -backend-config="bucket=telegram-request-manager-test-terraform-state" \
             -backend-config="key=test/terraform.tfstate" \
             -backend-config="region=${{ secrets.AWS_DEFAULT_REGION }}" \
             -backend-config="encrypt=true"
-          terraform apply \ # Apply the Terraform configuration to deploy/update resources.
-            -var-file=environments/test/terraform.tfvars \ # Use the test environment-specific variables.
-            -var="aws_region=${{ secrets.AWS_DEFAULT_REGION }}" \ # Specify the AWS region for the deployment.
-            -auto-approve # Automatically approve the Terraform plan and apply changes without manual input.
+          terraform apply \
+            -var-file=environments/test/terraform.tfvars \
+            -var="aws_region=${{ secrets.AWS_DEFAULT_REGION }}" \
+            -auto-approve
 
   # Deploy to Production Environment.
   deploy-prod:
@@ -82,7 +82,7 @@ jobs:
           pip install -r requirements.txt -t .
           cp -r ../../shared .
           zip -r ../../deployment/terraform/telegram_bot.zip .
-          sha256sum ../../deployment/terraform/telegram_bot.zip > ../../deployment/terraform/telegram_bot.zip.sha256
+          sha256sum ../../deployment/terraform/telegram_bot.zip.sha256
 
       # Step 4: Apply the Terraform configuration for the production environment.
       - name: Terraform Init and Apply (Prod) # Initialize and apply the Terraform configuration for the production environment.
@@ -92,12 +92,12 @@ jobs:
           GOOGLE_SHEET_ID: ${{ secrets.PROD_GOOGLE_SHEET_ID }} # Production Google Sheet ID for storing responses.
         working-directory: deployment/terraform # Set the working directory to where Terraform files are located.
         run: |
-          terraform init \ # Initialize the Terraform backend with the production environment configuration.
+          terraform init \
             -backend-config="bucket=telegram-request-manager-prod-terraform-state" \
             -backend-config="key=prod/terraform.tfstate" \
             -backend-config="region=${{ secrets.AWS_DEFAULT_REGION }}" \
             -backend-config="encrypt=true"
-          terraform apply \ # Apply the Terraform configuration to deploy/update resources.
-            -var-file=environments/prod/terraform.tfvars \ # Use the production environment-specific variables.
-            -var="aws_region=${{ secrets.AWS_DEFAULT_REGION }}" \ # Specify the AWS region for the deployment.
-            -auto-approve # Automatically approve the Terraform plan and apply changes without manual input.
+          terraform apply \
+            -var-file=environments/prod/terraform.tfvars \
+            -var="aws_region=${{ secrets.AWS_DEFAULT_REGION }}" \
+            -auto-approve
