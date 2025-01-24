@@ -28,8 +28,14 @@ jobs:
       - name: Install dependencies and package Lambda function # Prepare Lambda deployment package.
         working-directory: lambdas/telegram_bot # Move to the Lambda directory.
         run: |
-          pip install -r requirements.txt -t . # Install Python dependencies into the current directory.
-          zip -r ../../deployment/terraform/telegram_bot.zip . # Create a zip package for deployment.
+          # Install Python dependencies
+          pip install -r requirements.txt -t . 
+          
+          # Copy shared directory into the Lambda directory
+          cp -r ../../shared . 
+          
+          # Create a zip package including all files and dependencies
+          zip -r ../../deployment/terraform/telegram_bot.zip . 
 
       - name: Terraform Init and Apply (Test) # Apply the Terraform configuration for the test environment.
         env:
@@ -66,8 +72,14 @@ jobs:
       - name: Install dependencies and package Lambda function # Prepare Lambda deployment package.
         working-directory: lambdas/telegram_bot # Move to the Lambda directory.
         run: |
-          pip install -r requirements.txt -t . # Install Python dependencies into the current directory.
-          zip -r ../../deployment/terraform/telegram_bot.zip . # Create a zip package for deployment.
+          # Install Python dependencies
+          pip install -r requirements.txt -t . 
+          
+          # Copy shared directory into the Lambda directory
+          cp -r ../../shared . 
+          
+          # Create a zip package including all files and dependencies
+          zip -r ../../deployment/terraform/telegram_bot.zip . 
 
       - name: Terraform Init and Apply (Prod) # Apply the Terraform configuration for the production environment.
         env:
