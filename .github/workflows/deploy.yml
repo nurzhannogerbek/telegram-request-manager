@@ -17,50 +17,97 @@ jobs:
     runs-on: ubuntu-latest # Use the latest Ubuntu runner provided by GitHub.
 
     steps:
-      - name: Checkout code # Step to pull the repository code into the runner.
-        uses: actions/checkout@v3 # Official GitHub action to check out repository code.
+      - name: Restore Terraform Cache # Restore cached Terraform files to speed up the process.
+        uses: actions/cache@v3 # Official GitHub action for caching.
+        with:
+          path: |
+            ~/.terraform.d/plugins # Cache Terraform plugins.
+            .terraform             # Cache Terraform module data.
+          key: ${{ runner.os }}-terraform-${{ hashFiles('**/*.tf') }} # Unique cache key based on OS and .tf files.
+          restore-keys: |
+            ${{ runner.os }}-terraform-
 
-      - name: Setup Terraform # Install Terraform CLI only if needed.
+      - name: Checkout code # Pull the repository code into the runner.
+        uses: actions/checkout@v3 # Official GitHub action to check out the repository code.
+
+      - name: Install Dependencies # Install required dependencies (e.g., zip for packaging Lambda function).
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y zip
+
+      - name: Package Lambda Function # Zip the Lambda function code for deployment.
+        run: |
+          cd lambdas/telegram_bot
+          zip -r ../../telegram_bot.zip .
+
+      - name: Setup Terraform # Install and configure Terraform CLI.
         uses: hashicorp/setup-terraform@v2 # Official Terraform GitHub Action.
         with:
           terraform_version: 1.5.0 # Specify the version of Terraform to use.
 
-      - name: Terraform Init and Apply (Test) # Apply the Terraform configuration for the test environment.
+      - name: Terraform Init and Apply (Test) # Initialize and apply Terraform configuration for the test environment.
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TEST_TELEGRAM_BOT_TOKEN }} # Test Telegram bot token.
           ADMIN_CHAT_ID: ${{ secrets.TEST_ADMIN_CHAT_ID }} # Test admin chat ID.
           GOOGLE_SHEET_ID: ${{ secrets.TEST_GOOGLE_SHEET_ID }} # Test Google Sheet ID.
         working-directory: deployment/terraform # Set the working directory for Terraform commands.
         run: |
-          terraform init -backend-config="key=test/terraform.tfstate"
-          terraform apply \
-            -var-file=environments/test/terraform.tfvars \
-            -var="aws_region=${{ secrets.AWS_DEFAULT_REGION }}" \
-            -auto-approve
+          terraform init -backend-config="bucket=telegram-request-manager-terraform-state" \ # Configure S3 bucket for Terraform state.
+            -backend-config="key=test/terraform.tfstate" \ # Define the key for the state file in the test environment.
+            -backend-config="region=${{ secrets.AWS_DEFAULT_REGION }}" \ # Specify the AWS region.
+            -backend-config="encrypt=true" # Enable encryption for the state file.
+          terraform apply \ # Apply the Terraform configuration.
+            -var-file=environments/test/terraform.tfvars \ # Use environment-specific variable file.
+            -var="aws_region=${{ secrets.AWS_DEFAULT_REGION }}" \ # Pass AWS region as a variable.
+            -auto-approve # Automatically approve changes.
 
   deploy-prod:
     name: Deploy to Production Environment # Job to deploy the production environment.
     needs: deploy-test # Ensure this job runs only after the test deployment succeeds.
     runs-on: ubuntu-latest # Use the latest Ubuntu runner.
+    if: false # Disable this job by default.
 
     steps:
-      - name: Checkout code # Step to pull the repository code into the runner.
-        uses: actions/checkout@v3 # Official GitHub action to check out repository code.
+      - name: Restore Terraform Cache # Restore cached Terraform files to speed up the process.
+        uses: actions/cache@v3 # Official GitHub action for caching.
+        with:
+          path: |
+            ~/.terraform.d/plugins # Cache Terraform plugins.
+            .terraform             # Cache Terraform module data.
+          key: ${{ runner.os }}-terraform-${{ hashFiles('**/*.tf') }} # Unique cache key based on OS and .tf files.
+          restore-keys: |
+            ${{ runner.os }}-terraform-
 
-      - name: Setup Terraform # Install Terraform CLI only if needed.
+      - name: Checkout code # Pull the repository code into the runner.
+        uses: actions/checkout@v3 # Official GitHub action to check out the repository code.
+
+      - name: Install Dependencies # Install required dependencies (e.g., zip for packaging Lambda function).
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y zip
+
+      - name: Package Lambda Function # Zip the Lambda function code for deployment.
+        run: |
+          cd lambdas/telegram_bot
+          zip -r ../../telegram_bot.zip .
+
+      - name: Setup Terraform # Install and configure Terraform CLI.
         uses: hashicorp/setup-terraform@v2 # Official Terraform GitHub Action.
         with:
           terraform_version: 1.5.0 # Specify the version of Terraform to use.
 
-      - name: Terraform Init and Apply (Prod) # Apply the Terraform configuration for the production environment.
+      - name: Terraform Init and Apply (Prod) # Initialize and apply Terraform configuration for the production environment.
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.PROD_TELEGRAM_BOT_TOKEN }} # Production Telegram bot token.
           ADMIN_CHAT_ID: ${{ secrets.PROD_ADMIN_CHAT_ID }} # Production admin chat ID.
           GOOGLE_SHEET_ID: ${{ secrets.PROD_GOOGLE_SHEET_ID }} # Production Google Sheet ID.
         working-directory: deployment/terraform # Set the working directory for Terraform commands.
         run: |
-          terraform init -backend-config="key=prod/terraform.tfstate"
-          terraform apply \
-            -var-file=environments/prod/terraform.tfvars \
-            -var="aws_region=${{ secrets.AWS_DEFAULT_REGION }}" \
-            -auto-approve
+          terraform init -backend-config="bucket=telegram-request-manager-terraform-state" \ # Configure S3 bucket for Terraform state.
+            -backend-config="key=prod/terraform.tfstate" \ # Define the key for the state file in the production environment.
+            -backend-config="region=${{ secrets.AWS_DEFAULT_REGION }}" \ # Specify the AWS region.
+            -backend-config="encrypt=true" # Enable encryption for the state file.
+          terraform apply \ # Apply the Terraform configuration.
+            -var-file=environments/prod/terraform.tfvars \ # Use environment-specific variable file.
+            -var="aws_region=${{ secrets.AWS_DEFAULT_REGION }}" \ # Pass AWS region as a variable.
+            -auto-approve # Automatically approve changes.

@@ -1,5 +1,5 @@
 provider "aws" {
-  region = var.aws_region # Use the AWS region from the variable.
+  region = var.aws_region
 }
 
 # Define the IAM role for the Lambda function.
@@ -87,7 +87,13 @@ resource "aws_api_gateway_integration" "telegram_bot_post_integration" {
 resource "aws_api_gateway_deployment" "telegram_bot_deployment" {
   rest_api_id = aws_api_gateway_rest_api.telegram_bot_api.id
   depends_on  = [aws_api_gateway_integration.telegram_bot_post_integration]
-  stage_name  = var.api_stage_name
+}
+
+# Define the API Gateway stage explicitly.
+resource "aws_api_gateway_stage" "telegram_bot_stage" {
+  deployment_id = aws_api_gateway_deployment.telegram_bot_deployment.id
+  rest_api_id   = aws_api_gateway_rest_api.telegram_bot_api.id
+  stage_name    = var.api_stage_name
 }
 
 # Grant API Gateway permission to invoke the Lambda function.
@@ -101,6 +107,16 @@ resource "aws_lambda_permission" "allow_api_gateway" {
 
 # Output the API Gateway URL.
 output "api_gateway_url" {
-  value       = aws_api_gateway_deployment.telegram_bot_deployment.invoke_url
+  value       = aws_api_gateway_stage.telegram_bot_stage.invoke_url
   description = "The URL for the API Gateway endpoint."
+}
+
+terraform {
+  backend "s3" {
+    bucket         = "${var.project_name}_${var.environment}_terraform-state"
+    key            = "${var.environment}/terraform.tfstate"
+    region         = var.aws_region
+    encrypt        = true
+    dynamodb_table = "terraform-lock-table"
+  }
 }
