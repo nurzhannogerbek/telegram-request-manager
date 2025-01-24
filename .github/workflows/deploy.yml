@@ -52,6 +52,7 @@ jobs:
     name: Deploy to Production Environment # Job to deploy the production environment.
     needs: deploy-test # Ensure this job runs only after the test deployment succeeds.
     runs-on: ubuntu-latest # Use the latest Ubuntu runner.
+    if: false # Temporarily disable production deployment.
 
     steps:
       - name: Checkout code # Step to pull the repository code into the runner.
