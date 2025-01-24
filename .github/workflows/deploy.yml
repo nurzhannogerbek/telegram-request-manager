@@ -17,16 +17,6 @@ jobs:
     runs-on: ubuntu-latest # Use the latest Ubuntu runner provided by GitHub.
 
     steps:
-      - name: Restore Terraform Cache # Step to restore cached Terraform files.
-        uses: actions/cache@v3 # GitHub's official caching action.
-        with:
-          path: |
-            ~/.terraform.d/plugins
-            .terraform
-          key: ${{ runner.os }}-terraform-${{ hashFiles('**/*.tf') }} # Unique cache key based on OS and .tf files.
-          restore-keys: |
-            ${{ runner.os }}-terraform-
-
       - name: Checkout code # Step to pull the repository code into the runner.
         uses: actions/checkout@v3 # Official GitHub action to check out repository code.
 
@@ -40,6 +30,7 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TEST_TELEGRAM_BOT_TOKEN }} # Test Telegram bot token.
           ADMIN_CHAT_ID: ${{ secrets.TEST_ADMIN_CHAT_ID }} # Test admin chat ID.
           GOOGLE_SHEET_ID: ${{ secrets.TEST_GOOGLE_SHEET_ID }} # Test Google Sheet ID.
+        working-directory: deployment/terraform # Set the working directory for Terraform commands.
         run: |
           terraform init -backend-config="key=test/terraform.tfstate"
           terraform apply \
@@ -51,19 +42,8 @@ jobs:
     name: Deploy to Production Environment # Job to deploy the production environment.
     needs: deploy-test # Ensure this job runs only after the test deployment succeeds.
     runs-on: ubuntu-latest # Use the latest Ubuntu runner.
-    if: false # Skip this job entirely.
 
     steps:
-      - name: Restore Terraform Cache # Step to restore cached Terraform files.
-        uses: actions/cache@v3 # GitHub's official caching action.
-        with:
-          path: |
-            ~/.terraform.d/plugins
-            .terraform
-          key: ${{ runner.os }}-terraform-${{ hashFiles('**/*.tf') }} # Unique cache key based on OS and .tf files.
-          restore-keys: |
-            ${{ runner.os }}-terraform-
-
       - name: Checkout code # Step to pull the repository code into the runner.
         uses: actions/checkout@v3 # Official GitHub action to check out repository code.
 
@@ -77,6 +57,7 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.PROD_TELEGRAM_BOT_TOKEN }} # Production Telegram bot token.
           ADMIN_CHAT_ID: ${{ secrets.PROD_ADMIN_CHAT_ID }} # Production admin chat ID.
           GOOGLE_SHEET_ID: ${{ secrets.PROD_GOOGLE_SHEET_ID }} # Production Google Sheet ID.
+        working-directory: deployment/terraform # Set the working directory for Terraform commands.
         run: |
           terraform init -backend-config="key=prod/terraform.tfstate"
           terraform apply \
