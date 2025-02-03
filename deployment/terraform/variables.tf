@@ -1,66 +1,84 @@
-# Define the environment (e.g., dev, prod).
-variable "environment" {
-  description = "Environment name (e.g., dev, prod)."
-}
-
-# Define the AWS region.
-variable "aws_region" {
-  description = "The AWS region where resources will be deployed."
-}
-
-# Define the project name (e.g., telegram-request-manager).
-variable "project_name" {
-  description = "The name of the project to include in resource names."
-}
-
-# Define the API Gateway stage name.
-variable "api_stage_name" {
-  description = "Stage name for the API Gateway."
-}
-
-# Define the Telegram bot token.
+# Variable to specify the Telegram Bot Token for authentication.
 variable "telegram_bot_token" {
-  description = "Telegram bot token."
+  description = "Telegram Bot Token to authenticate the bot with Telegram API."
 }
 
-# Define the admin chat ID for Telegram notifications.
+# Variable to specify the Telegram Admin Chat ID for sending updates.
 variable "admin_chat_id" {
-  description = "Admin chat ID for Telegram notifications."
+  description = "Telegram Admin Chat ID where notifications or updates will be sent."
 }
 
-# Define the Google Sheet ID.
+# Variable to specify the Google Sheet ID used to store bot responses.
 variable "google_sheet_id" {
-  description = "Google Sheet ID for storing user responses."
+  description = "Google Sheet ID where responses from the Telegram bot will be logged."
 }
 
-# Define Google Service Account credentials.
+# Variable specifying the type of service account (typically 'service_account').
 variable "service_account_type" {
-  description = "Type of Google Service Account."
+  description = "Service account type required for Google API authentication."
 }
+
+# Project ID associated with the service account for Google API access.
 variable "service_account_project_id" {
-  description = "Google Service Account project ID."
+  description = "The project ID associated with the Google service account."
 }
+
+# ID of the private key associated with the service account.
 variable "service_account_private_key_id" {
-  description = "Google Service Account private key ID."
+  description = "The private key ID associated with the Google service account."
 }
+
+# The private key of the service account for secure authentication.
 variable "service_account_private_key" {
-  description = "Google Service Account private key."
+  description = "The private key associated with the Google service account, used for authentication."
 }
+
+# Client email for the service account to access Google APIs.
 variable "service_account_client_email" {
-  description = "Google Service Account client email."
+  description = "The email address of the Google service account."
 }
+
+# Client ID of the service account.
 variable "service_account_client_id" {
-  description = "Google Service Account client ID."
+  description = "The client ID of the Google service account."
 }
+
+# OAuth 2.0 authentication URI for the Google service account.
 variable "service_account_auth_uri" {
-  description = "Google OAuth2 Auth URI."
+  description = "The URI for OAuth 2.0 authentication for the Google service account."
 }
+
+# URI for retrieving OAuth 2.0 tokens.
 variable "service_account_token_uri" {
-  description = "Google OAuth2 Token URI."
+  description = "The URI used to retrieve OAuth 2.0 tokens for the Google service account."
 }
+
+# URL providing access to Google API provider certificates.
 variable "service_account_auth_provider_cert_url" {
-  description = "Google Auth Provider Cert URL."
+  description = "URL for Google’s OAuth provider certificates."
 }
+
+# URL to retrieve service account metadata, including client certificates.
 variable "service_account_client_cert_url" {
-  description = "Google Client Cert URL."
+  description = "URL that points to the service account's client certificates for API access."
+}
+
+# Name of the project in Terraform configuration.
+variable "project_name" {
+  description = "The project name used to create unique resource identifiers."
+}
+
+# Environment name (e.g., test, prod).
+variable "environment" {
+  description = "The environment where the resources will be deployed (e.g., test or production)."
+}
+
+# API Gateway stage name (e.g., test, prod).
+variable "api_stage_name" {
+  description = "The stage name for the API Gateway (test or production)."
+}
+
+# AWS region where the infrastructure is deployed.
+variable "aws_region" {
+  description = "AWS region where the infrastructure is deployed."
 }

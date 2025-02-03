@@ -1,36 +1,37 @@
-name: Deploy to AWS # The name of the GitHub Actions workflow, visible in the GitHub Actions interface.
+name: Deploy to AWS # GitHub Actions workflow name, displayed in the interface.
 
 on:
   push:
     branches:
-      - main # This triggers the workflow whenever code is pushed to the 'main' branch.
-  workflow_dispatch: # Allows manual execution of the workflow from the GitHub Actions interface.
+      - main # Trigger this workflow when code is pushed to the main branch.
+  workflow_dispatch: # Allow manual execution of the workflow through GitHub Actions.
 
+# Define environment variables for AWS authentication using GitHub Secrets.
 env:
-  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }} # AWS Access Key, securely stored in GitHub Secrets.
-  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }} # AWS Secret Key, securely stored in GitHub Secrets.
-  AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }} # AWS region where the infrastructure is deployed.
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
 
 jobs:
-  # Deploy to Test Environment.
+  # Job to deploy to the test environment.
   deploy-test:
-    name: Deploy to Test Environment # Job name for deploying to the test environment.
-    runs-on: ubuntu-latest # Use the latest Ubuntu virtual machine provided by GitHub Actions.
+    name: Deploy to Test Environment
+    runs-on: ubuntu-latest # Use the latest Ubuntu virtual machine provided by GitHub.
 
     steps:
-      # Step 1: Check out the code.
-      - name: Checkout code # A descriptive name for the step.
-        uses: actions/checkout@v3 # Official GitHub Action to clone the repository into the runner.
+      # Step 1: Checkout the repository.
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      # Step 2: Setup Terraform.
-      - name: Setup Terraform # Install and configure the Terraform CLI in the GitHub Actions environment.
-        uses: hashicorp/setup-terraform@v2 # Official Terraform GitHub Action.
+      # Step 2: Install and configure Terraform CLI.
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
         with:
-          terraform_version: 1.5.0 # Specify the version of Terraform to install and use.
+          terraform_version: 1.5.0 # Specify the Terraform version.
 
-      # Step 3: Prepare the Lambda function package.
-      - name: Install dependencies and package Lambda function # This step creates the zip file for the Lambda function.
-        working-directory: lambdas/telegram_bot # Navigate to the Lambda function directory.
+      # Step 3: Install dependencies and package the Lambda function.
+      - name: Install dependencies and package Lambda function
+        working-directory: lambdas/telegram_bot
         run: |
           rm -f ../../deployment/terraform/telegram_bot.zip
           pip install -r requirements.txt -t .
@@ -38,17 +39,26 @@ jobs:
           zip -r ../../deployment/terraform/telegram_bot.zip .
           sha256sum ../../deployment/terraform/telegram_bot.zip > ../../deployment/terraform/telegram_bot.zip.sha256
 
-      # Step 4a: Debug the service_account_private_key before applying Terraform
+      # Step 4: Debug service_account_private_key before applying Terraform.
       - name: Debug service_account_private_key
         run: grep "service_account_private_key" deployment/terraform/environments/test/terraform.tfvars
 
-      # Step 4b: Apply the Terraform configuration for the test environment.
-      - name: Terraform Init and Apply (Test) # Initialize and apply the Terraform configuration for the test environment.
+      # Step 5: Initialize and apply Terraform configuration.
+      - name: Terraform Init and Apply (Test)
         env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TEST_TELEGRAM_BOT_TOKEN }} # Test environment-specific token for the bot.
-          ADMIN_CHAT_ID: ${{ secrets.TEST_ADMIN_CHAT_ID }} # Test admin chat ID to handle notifications.
-          GOOGLE_SHEET_ID: ${{ secrets.TEST_GOOGLE_SHEET_ID }} # Test Google Sheet ID for storing responses.
-        working-directory: deployment/terraform # Set the working directory to where Terraform files are located.
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TEST_TELEGRAM_BOT_TOKEN }}
+          ADMIN_CHAT_ID: ${{ secrets.TEST_ADMIN_CHAT_ID }}
+          GOOGLE_SHEET_ID: ${{ secrets.TEST_GOOGLE_SHEET_ID }}
+          SERVICE_ACCOUNT_TYPE: ${{ secrets.TEST_SERVICE_ACCOUNT_TYPE }}
+          SERVICE_ACCOUNT_PROJECT_ID: ${{ secrets.TEST_SERVICE_ACCOUNT_PROJECT_ID }}
+          SERVICE_ACCOUNT_PRIVATE_KEY_ID: ${{ secrets.TEST_SERVICE_ACCOUNT_PRIVATE_KEY_ID }}
+          SERVICE_ACCOUNT_PRIVATE_KEY: ${{ secrets.TEST_SERVICE_ACCOUNT_PRIVATE_KEY }}
+          SERVICE_ACCOUNT_CLIENT_EMAIL: ${{ secrets.TEST_SERVICE_ACCOUNT_CLIENT_EMAIL }}
+          SERVICE_ACCOUNT_CLIENT_ID: ${{ secrets.TEST_SERVICE_ACCOUNT_CLIENT_ID }}
+          SERVICE_ACCOUNT_AUTH_URI: ${{ secrets.TEST_SERVICE_ACCOUNT_AUTH_URI }}
+          SERVICE_ACCOUNT_TOKEN_URI: ${{ secrets.TEST_SERVICE_ACCOUNT_TOKEN_URI }}
+          SERVICE_ACCOUNT_AUTH_PROVIDER_CERT_URL: ${{ secrets.TEST_SERVICE_ACCOUNT_AUTH_PROVIDER_CERT_URL }}
+          SERVICE_ACCOUNT_CLIENT_CERT_URL: ${{ secrets.TEST_SERVICE_ACCOUNT_CLIENT_CERT_URL }}
         run: |
           terraform init \
             -backend-config="bucket=telegram-request-manager-test-terraform-state" \
@@ -56,45 +66,66 @@ jobs:
             -backend-config="region=${{ secrets.AWS_DEFAULT_REGION }}" \
             -backend-config="encrypt=true"
           terraform apply \
-            -var-file=environments/test/terraform.tfvars \
-            -var="aws_region=${{ secrets.AWS_DEFAULT_REGION }}" \
+            -var="telegram_bot_token=$TELEGRAM_BOT_TOKEN" \
+            -var="admin_chat_id=$ADMIN_CHAT_ID" \
+            -var="google_sheet_id=$GOOGLE_SHEET_ID" \
+            -var="service_account_type=$SERVICE_ACCOUNT_TYPE" \
+            -var="service_account_project_id=$SERVICE_ACCOUNT_PROJECT_ID" \
+            -var="service_account_private_key_id=$SERVICE_ACCOUNT_PRIVATE_KEY_ID" \
+            -var="service_account_private_key=$SERVICE_ACCOUNT_PRIVATE_KEY" \
+            -var="service_account_client_email=$SERVICE_ACCOUNT_CLIENT_EMAIL" \
+            -var="service_account_client_id=$SERVICE_ACCOUNT_CLIENT_ID" \
+            -var="service_account_auth_uri=$SERVICE_ACCOUNT_AUTH_URI" \
+            -var="service_account_token_uri=$SERVICE_ACCOUNT_TOKEN_URI" \
+            -var="service_account_auth_provider_cert_url=$SERVICE_ACCOUNT_AUTH_PROVIDER_CERT_URL" \
+            -var="service_account_client_cert_url=$SERVICE_ACCOUNT_CLIENT_CERT_URL" \
+            -var-file="environments/test/terraform.tfvars" \
             -auto-approve
 
-  # Deploy to Production Environment.
+  # Job to deploy to the production environment.
   deploy-prod:
-    name: Deploy to Production Environment # Job name for deploying to the production environment.
-    needs: deploy-test # Ensure this job runs only after the test deployment succeeds.
-    runs-on: ubuntu-latest # Use the latest Ubuntu virtual machine provided by GitHub Actions.
+    name: Deploy to Production Environment
+    needs: deploy-test # Run this job only after the test deployment succeeds.
+    runs-on: ubuntu-latest
     if: false # Temporarily disable the production deployment.
 
     steps:
-      # Step 1: Check out the code.
-      - name: Checkout code # A descriptive name for the step.
-        uses: actions/checkout@v3 # Official GitHub Action to clone the repository into the runner.
+      # Step 1: Checkout the repository.
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      # Step 2: Setup Terraform.
-      - name: Setup Terraform # Install and configure the Terraform CLI in the GitHub Actions environment.
-        uses: hashicorp/setup-terraform@v2 # Official Terraform GitHub Action.
+      # Step 2: Install and configure Terraform CLI.
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
         with:
-          terraform_version: 1.5.0 # Specify the version of Terraform to install and use.
+          terraform_version: 1.5.0
 
-      # Step 3: Prepare the Lambda function package.
-      - name: Install dependencies and package Lambda function # This step creates the zip file for the Lambda function.
-        working-directory: lambdas/telegram_bot # Navigate to the Lambda function directory.
+      # Step 3: Install dependencies and package the Lambda function.
+      - name: Install dependencies and package Lambda function
+        working-directory: lambdas/telegram_bot
         run: |
           rm -f ../../deployment/terraform/telegram_bot.zip
           pip install -r requirements.txt -t .
           cp -r ../../shared .
           zip -r ../../deployment/terraform/telegram_bot.zip .
-          sha256sum ../../deployment/terraform/telegram_bot.zip.sha256
+          sha256sum ../../deployment/terraform/telegram_bot.zip > ../../deployment/terraform/telegram_bot.zip.sha256
 
-      # Step 4: Apply the Terraform configuration for the production environment.
-      - name: Terraform Init and Apply (Prod) # Initialize and apply the Terraform configuration for the production environment.
+      # Step 4: Initialize and apply Terraform configuration for production.
+      - name: Terraform Init and Apply (Prod)
         env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.PROD_TELEGRAM_BOT_TOKEN }} # Production environment-specific token for the bot.
-          ADMIN_CHAT_ID: ${{ secrets.PROD_ADMIN_CHAT_ID }} # Production admin chat ID to handle notifications.
-          GOOGLE_SHEET_ID: ${{ secrets.PROD_GOOGLE_SHEET_ID }} # Production Google Sheet ID for storing responses.
-        working-directory: deployment/terraform # Set the working directory to where Terraform files are located.
+          TELEGRAM_BOT_TOKEN: ${{ secrets.PROD_TELEGRAM_BOT_TOKEN }}
+          ADMIN_CHAT_ID: ${{ secrets.PROD_ADMIN_CHAT_ID }}
+          GOOGLE_SHEET_ID: ${{ secrets.PROD_GOOGLE_SHEET_ID }}
+          SERVICE_ACCOUNT_TYPE: ${{ secrets.PROD_SERVICE_ACCOUNT_TYPE }}
+          SERVICE_ACCOUNT_PROJECT_ID: ${{ secrets.PROD_SERVICE_ACCOUNT_PROJECT_ID }}
+          SERVICE_ACCOUNT_PRIVATE_KEY_ID: ${{ secrets.PROD_SERVICE_ACCOUNT_PRIVATE_KEY_ID }}
+          SERVICE_ACCOUNT_PRIVATE_KEY: ${{ secrets.PROD_SERVICE_ACCOUNT_PRIVATE_KEY }}
+          SERVICE_ACCOUNT_CLIENT_EMAIL: ${{ secrets.PROD_SERVICE_ACCOUNT_CLIENT_EMAIL }}
+          SERVICE_ACCOUNT_CLIENT_ID: ${{ secrets.PROD_SERVICE_ACCOUNT_CLIENT_ID }}
+          SERVICE_ACCOUNT_AUTH_URI: ${{ secrets.PROD_SERVICE_ACCOUNT_AUTH_URI }}
+          SERVICE_ACCOUNT_TOKEN_URI: ${{ secrets.PROD_SERVICE_ACCOUNT_TOKEN_URI }}
+          SERVICE_ACCOUNT_AUTH_PROVIDER_CERT_URL: ${{ secrets.PROD_SERVICE_ACCOUNT_AUTH_PROVIDER_CERT_URL }}
+          SERVICE_ACCOUNT_CLIENT_CERT_URL: ${{ secrets.PROD_SERVICE_ACCOUNT_CLIENT_CERT_URL }}
         run: |
           terraform init \
             -backend-config="bucket=telegram-request-manager-prod-terraform-state" \
@@ -102,6 +133,18 @@ jobs:
             -backend-config="region=${{ secrets.AWS_DEFAULT_REGION }}" \
             -backend-config="encrypt=true"
           terraform apply \
-            -var-file=environments/prod/terraform.tfvars \
-            -var="aws_region=${{ secrets.AWS_DEFAULT_REGION }}" \
+            -var="telegram_bot_token=$TELEGRAM_BOT_TOKEN" \
+            -var="admin_chat_id=$ADMIN_CHAT_ID" \
+            -var="google_sheet_id=$GOOGLE_SHEET_ID" \
+            -var="service_account_type=$SERVICE_ACCOUNT_TYPE" \
+            -var="service_account_project_id=$SERVICE_ACCOUNT_PROJECT_ID" \
+            -var="service_account_private_key_id=$SERVICE_ACCOUNT_PRIVATE_KEY_ID" \
+            -var="service_account_private_key=$SERVICE_ACCOUNT_PRIVATE_KEY" \
+            -var="service_account_client_email=$SERVICE_ACCOUNT_CLIENT_EMAIL" \
+            -var="service_account_client_id=$SERVICE_ACCOUNT_CLIENT_ID" \
+            -var="service_account_auth_uri=$SERVICE_ACCOUNT_AUTH_URI" \
+            -var="service_account_token_uri=$SERVICE_ACCOUNT_TOKEN_URI" \
+            -var="service_account_auth_provider_cert_url=$SERVICE_ACCOUNT_AUTH_PROVIDER_CERT_URL" \
+            -var="service_account_client_cert_url=$SERVICE_ACCOUNT_CLIENT_CERT_URL" \
+            -var-file="environments/prod/terraform.tfvars" \
             -auto-approve
