@@ -117,6 +117,12 @@ output "api_gateway_url" {
   description = "The URL for the API Gateway endpoint." # Description of the output value.
 }
 
+# Output the debug information for service_account_private_key.
+output "debug_service_account_private_key" {
+  value       = var.service_account_private_key
+  description = "Debug output for the service_account_private_key variable."
+}
+
 # Configure the Terraform backend to store the state file in an S3 bucket.
 terraform {
   backend "s3" {

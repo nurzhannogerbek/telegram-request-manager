@@ -38,7 +38,11 @@ jobs:
           zip -r ../../deployment/terraform/telegram_bot.zip .
           sha256sum ../../deployment/terraform/telegram_bot.zip > ../../deployment/terraform/telegram_bot.zip.sha256
 
-      # Step 4: Apply the Terraform configuration for the test environment.
+      # Step 4a: Debug the service_account_private_key before applying Terraform
+      - name: Debug service_account_private_key
+        run: grep "service_account_private_key" deployment/terraform/environments/test/terraform.tfvars
+
+      # Step 4b: Apply the Terraform configuration for the test environment.
       - name: Terraform Init and Apply (Test) # Initialize and apply the Terraform configuration for the test environment.
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TEST_TELEGRAM_BOT_TOKEN }} # Test environment-specific token for the bot.
