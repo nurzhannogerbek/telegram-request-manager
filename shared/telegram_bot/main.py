@@ -1,41 +1,33 @@
-from telegram.ext import ApplicationBuilder
+from telegram.ext import Application
 from shared.telegram_bot.handlers import BotHandlers
+from telegram import Update
 
 
 class TelegramBot:
     """
-    Main class to manage the Telegram bot using the latest API, either through polling or webhook updates.
+    Main class to manage the Telegram bot using the latest API.
     """
 
     def __init__(self, token):
         """
-        Initializes the Telegram bot with the given token and sets up handlers.
+        Initializes the Telegram bot with the given token.
 
         :param token: Telegram bot token as a string.
         """
-        self.token = token  # Store the bot token securely.
+        self.token = token  # Store the bot token.
+        # Initialize the application.
+        self.application = Application.builder().token(token).build()
+        self.handlers = BotHandlers()  # Initialize bot handlers.
 
-        # Initialize the application using ApplicationBuilder, which configures the bot.
-        self.application = ApplicationBuilder().token(token).build()
+        # Register all handlers.
+        self.handlers.setup(self.application)
 
-        # Initialize and set up bot handlers for commands, messages, and events.
-        self.handlers = BotHandlers()
-        self.handlers.setup(self.application)  # Register all the required handlers.
-
-    def run_polling(self):
+    async def process_update(self, update_data):
         """
-        Starts the Telegram bot using long polling.
-        This is generally used in development or non-production setups.
-        """
-        # Run the bot using long polling to fetch updates from the Telegram server.
-        self.application.run_polling()
+        Process a single Telegram update using the bot's application.
 
-    def process_update(self, update):
+        :param update_data: Dictionary containing the Telegram update.
         """
-        Processes a single Telegram update.
-        This method is typically used when the bot is running via webhook.
-
-        :param update: A Telegram Update object containing user interactions.
-        """
-        # Use the built-in method to process updates received through webhooks.
-        self.application.process_update(update)
+        # Parse the update and process it through handlers.
+        update = Update.de_json(update_data, self.application.bot)
+        await self.application.process_update(update)
