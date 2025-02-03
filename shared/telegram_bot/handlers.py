@@ -5,7 +5,6 @@ from shared.telegram_bot.localization import Localization
 from shared.telegram_bot.google_sheets import GoogleSheets
 from shared.telegram_bot.utils import Utils
 
-
 class BotHandlers:
     """
     Class to manage all bot command and message handlers.
@@ -127,6 +126,9 @@ class BotHandlers:
             complete_message = self.localization.get_string(lang, "application_complete")
             await update.message.reply_text(complete_message)
             del self.user_forms[user_id]  # Clean up the form to free memory
+
+            # Approve the user to join the group automatically
+            await self.approve_join_request(user_id, context)
         else:
             # Ask the next question
             next_question = form.get_next_question()
@@ -134,26 +136,25 @@ class BotHandlers:
 
     async def handle_join_request(self, update: Update, context):
         """
-        Handles new join requests to the group and decides to approve or decline them.
+        Handles new join requests and starts the onboarding process by sending a welcome message.
         """
-        join_request = update.chat_join_request  # Extracts the join request object.
-        user_id = join_request.from_user.id  # Extracts the user ID of the requester.
-        chat_id = join_request.chat.id  # Extracts the chat ID of the group.
+        join_request = update.chat_join_request
+        user_id = join_request.from_user.id
+        lang = "en"  # Default to English, can be updated once the user selects a language.
 
-        if user_id in self.user_forms and self.user_forms[user_id].is_complete():
-            # If the form is complete, approve the join request
-            await context.bot.approve_chat_join_request(chat_id=chat_id, user_id=user_id)
-            # Notify the admin about the approval
-            await self.utils.notify_admin(
-                f"✅ User {join_request.from_user.full_name} has been approved to join the group."
-            )
-        else:
-            # If the form is incomplete, decline the join request
-            await context.bot.decline_chat_join_request(chat_id=chat_id, user_id=user_id)
-            # Notify the admin about the decline
-            await self.utils.notify_admin(
-                f"❌ User {join_request.from_user.full_name} has been declined due to incomplete data."
-            )
+        # Send a welcome message to the user
+        welcome_message = self.localization.get_string(lang, "welcome_message")
+        await context.bot.send_message(chat_id=user_id, text=welcome_message)
+
+        # Send privacy policy
+        await self.send_privacy_policy(update, context)
+
+    async def approve_join_request(self, user_id, context):
+        """
+        Automatically approve the join request after the user completes the application.
+        """
+        await context.bot.approve_chat_join_request(chat_id=context.chat_data["chat_id"], user_id=user_id)
+        await self.utils.notify_admin(f"✅ User {user_id} has been approved to join the group.")
 
     def setup(self, application):
         """

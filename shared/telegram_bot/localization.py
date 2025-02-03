@@ -18,6 +18,8 @@ class Localization:
                 "application_complete": "Спасибо! Ваша заявка принята.",
                 "fill_missing_data": "Вы не предоставили все необходимые данные. Ваша заявка отклонена.",
                 "error_message": "Произошла ошибка. Пожалуйста, попробуйте позже.",
+                "welcome_message": "Добро пожаловать в группу! Пожалуйста, ознакомьтесь с нашей политикой конфиденциальности.",
+                "form_reminder": "Напоминаем, что вы не закончили заполнение анкеты. Пожалуйста, завершите ее, чтобы получить доступ к группе.",
             },
             "kz": {
                 "privacy_accept": "Қабылдаймын",
@@ -29,6 +31,8 @@ class Localization:
                 "application_complete": "Рақмет! Сіздің өтініміңіз қабылданды.",
                 "fill_missing_data": "Сіз барлық қажетті деректерді бермедіңіз. Сіздің өтініміңіз қабылданбады.",
                 "error_message": "Қате орын алды. Кейінірек қайталап көріңіз.",
+                "welcome_message": "Топқа қош келдіңіз! Құпиялылық саясатымен танысыңыз.",
+                "form_reminder": "Сіз анкетаны толтырып бітірген жоқсыз. Топқа кіру үшін анкетаны аяқтаңыз.",
             },
             "en": {
                 "privacy_accept": "Agree",
@@ -40,6 +44,8 @@ class Localization:
                 "application_complete": "Thank you! Your application has been accepted.",
                 "fill_missing_data": "You did not provide all the required data. Your application has been declined.",
                 "error_message": "An error occurred. Please try again later.",
+                "welcome_message": "Welcome to the group! Please review our privacy policy before proceeding.",
+                "form_reminder": "Reminder: You have not completed the form. Please finish it to gain access to the group.",
             },
         }
 
