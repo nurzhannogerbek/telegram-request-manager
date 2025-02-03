@@ -1,36 +1,47 @@
-name: Deploy to AWS # The name of the GitHub Actions workflow, visible in the GitHub Actions interface.
+name: Deploy to AWS # Workflow name displayed in GitHub Actions interface.
 
 on:
   push:
     branches:
-      - main # This triggers the workflow whenever code is pushed to the 'main' branch.
-  workflow_dispatch: # Allows manual execution of the workflow from the GitHub Actions interface.
+      - main # Trigger the workflow when a push is made to the 'main' branch.
+  workflow_dispatch: # Allows manual execution of the workflow through the GitHub Actions interface.
 
 # Set environment variables to access AWS securely using GitHub Secrets.
 env:
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }} # AWS Access Key, securely stored in GitHub Secrets.
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }} # AWS Secret Key, securely stored in GitHub Secrets.
-  AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }} # AWS region where the infrastructure is deployed.
+  AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }} # AWS region where infrastructure is deployed.
 
 jobs:
-  # Deploy to Test Environment.
+  # Job for deploying to the test environment.
   deploy-test:
     name: Deploy to Test Environment # Job identifier for the test environment.
-    runs-on: ubuntu-latest # The GitHub-hosted runner to execute the job.
+    runs-on: ubuntu-latest # The GitHub-hosted runner to execute the job on.
 
     steps:
       # Step 1: Check out the repository code.
-      - name: Checkout code # A meaningful description of the step.
-        uses: actions/checkout@v3 # Official GitHub Action to clone the repository.
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      # Step 2: Install and configure the Terraform CLI.
-      - name: Setup Terraform # Setup the Terraform environment.
-        uses: hashicorp/setup-terraform@v2 # Official GitHub Action for setting up Terraform.
+      # Step 2: Cache Terraform plugins and state lock files.
+      - name: Cache Terraform plugins and lock files
+        uses: actions/cache@v3
         with:
-          terraform_version: 1.5.0 # Specify the required Terraform version.
+          path: |
+            **/.terraform
+            **/.terraform.lock.hcl
+          key: ${{ runner.os }}-terraform-${{ hashFiles('**/*.tf') }}
+          restore-keys: |
+            ${{ runner.os }}-terraform-
 
-      # Step 3: Install dependencies and create a zip package for the Lambda function.
-      - name: Install dependencies and package Lambda function # Package the Lambda function with its dependencies.
+      # Step 3: Install and configure Terraform CLI.
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.0
+
+      # Step 4: Install dependencies and package the Lambda function.
+      - name: Install dependencies and package Lambda function
         working-directory: lambdas/telegram_bot
         run: |
           rm -f ../../deployment/terraform/telegram_bot.zip
@@ -39,8 +50,8 @@ jobs:
           zip -r ../../deployment/terraform/telegram_bot.zip .
           sha256sum ../../deployment/terraform/telegram_bot.zip > ../../deployment/terraform/telegram_bot.zip.sha256
 
-      # Step 4: Initialize and apply the Terraform configuration for the test environment.
-      - name: Terraform Init and Apply (Test) # Initialize and deploy resources for the test environment.
+      # Step 5: Initialize Terraform backend and apply infrastructure changes.
+      - name: Terraform Init and Apply (Test)
         working-directory: deployment/terraform
         run: |
           terraform init \
@@ -48,28 +59,40 @@ jobs:
             -backend-config="key=test/terraform.tfstate" \
             -backend-config="region=${{ secrets.AWS_DEFAULT_REGION }}" \
             -backend-config="encrypt=true"
-          terraform apply -auto-approve -var-file="environments/test/terraform.tfvars"
+          terraform plan -out=tfplan -var-file="environments/test/terraform.tfvars"
+          terraform apply -auto-approve tfplan
 
-  # Deploy to Production Environment (disabled by default, enable by changing the condition).
+  # Job for deploying to the production environment.
   deploy-prod:
-    name: Deploy to Production Environment # Job identifier for the production environment.
+    name: Deploy to Production Environment
     needs: deploy-test # Ensure that the test deployment is successful before running this job.
-    runs-on: ubuntu-latest # The GitHub-hosted runner to execute the job.
+    runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch' # Deploy to production only through manual trigger.
 
     steps:
       # Step 1: Check out the repository code.
-      - name: Checkout code # A meaningful description of the step.
-        uses: actions/checkout@v3 # Official GitHub Action to clone the repository.
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      # Step 2: Install and configure the Terraform CLI.
-      - name: Setup Terraform # Setup the Terraform environment.
-        uses: hashicorp/setup-terraform@v2 # Official GitHub Action for setting up Terraform.
+      # Step 2: Cache Terraform plugins and lock files.
+      - name: Cache Terraform plugins and lock files
+        uses: actions/cache@v3
         with:
-          terraform_version: 1.5.0 # Specify the required Terraform version.
+          path: |
+            **/.terraform
+            **/.terraform.lock.hcl
+          key: ${{ runner.os }}-terraform-${{ hashFiles('**/*.tf') }}
+          restore-keys: |
+            ${{ runner.os }}-terraform-
 
-      # Step 3: Install dependencies and create a zip package for the Lambda function.
-      - name: Install dependencies and package Lambda function # Package the Lambda function with its dependencies.
+      # Step 3: Install and configure Terraform CLI.
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.0
+
+      # Step 4: Install dependencies and package the Lambda function.
+      - name: Install dependencies and package Lambda function
         working-directory: lambdas/telegram_bot
         run: |
           rm -f ../../deployment/terraform/telegram_bot.zip
@@ -78,8 +101,8 @@ jobs:
           zip -r ../../deployment/terraform/telegram_bot.zip .
           sha256sum ../../deployment/terraform/telegram_bot.zip > ../../deployment/terraform/telegram_bot.zip.sha256
 
-      # Step 4: Initialize and apply the Terraform configuration for the production environment.
-      - name: Terraform Init and Apply (Prod) # Initialize and deploy resources for the production environment.
+      # Step 5: Initialize Terraform backend and apply infrastructure changes.
+      - name: Terraform Init and Apply (Prod)
         working-directory: deployment/terraform
         run: |
           terraform init \
@@ -87,4 +110,5 @@ jobs:
             -backend-config="key=prod/terraform.tfstate" \
             -backend-config="region=${{ secrets.AWS_DEFAULT_REGION }}" \
             -backend-config="encrypt=true"
-          terraform apply -auto-approve -var-file="environments/prod/terraform.tfvars"
+          terraform plan -out=tfplan -var-file="environments/prod/terraform.tfvars"
+          terraform apply -auto-approve tfplan
