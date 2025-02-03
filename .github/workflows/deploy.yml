@@ -1,22 +1,22 @@
-name: Deploy to AWS # Workflow name displayed in GitHub Actions interface.
+name: Deploy to AWS # The name of the GitHub Actions workflow, visible in the GitHub Actions interface.
 
 on:
   push:
     branches:
-      - main # Trigger the workflow when a push is made to the 'main' branch.
-  workflow_dispatch: # Allows manual execution of the workflow through the GitHub Actions interface.
+      - main # This triggers the workflow whenever code is pushed to the 'main' branch.
+  workflow_dispatch: # Allows manual execution of the workflow from the GitHub Actions interface.
 
 # Set environment variables to access AWS securely using GitHub Secrets.
 env:
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }} # AWS Access Key, securely stored in GitHub Secrets.
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }} # AWS Secret Key, securely stored in GitHub Secrets.
-  AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }} # AWS region where infrastructure is deployed.
+  AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }} # AWS region where the infrastructure is deployed.
 
 jobs:
-  # Job for deploying to the test environment.
+  # Deploy to Test Environment.
   deploy-test:
     name: Deploy to Test Environment # Job identifier for the test environment.
-    runs-on: ubuntu-latest # The GitHub-hosted runner to execute the job on.
+    runs-on: ubuntu-latest # The GitHub-hosted runner to execute the job.
 
     steps:
       # Step 1: Check out the repository code.
@@ -48,23 +48,9 @@ jobs:
             -backend-config="key=test/terraform.tfstate" \
             -backend-config="region=${{ secrets.AWS_DEFAULT_REGION }}" \
             -backend-config="encrypt=true"
-          terraform apply -auto-approve \
-            -var="telegram_bot_token=${{ secrets.TEST_TELEGRAM_BOT_TOKEN }}" \
-            -var="admin_chat_id=${{ secrets.TEST_ADMIN_CHAT_ID }}" \
-            -var="google_sheet_id=${{ secrets.TEST_GOOGLE_SHEET_ID }}" \
-            -var="service_account_type=${{ secrets.TEST_SERVICE_ACCOUNT_TYPE }}" \
-            -var="service_account_project_id=${{ secrets.TEST_SERVICE_ACCOUNT_PROJECT_ID }}" \
-            -var="service_account_private_key_id=${{ secrets.TEST_SERVICE_ACCOUNT_PRIVATE_KEY_ID }}" \
-            -var="service_account_private_key=${{ secrets.TEST_SERVICE_ACCOUNT_PRIVATE_KEY }}" \
-            -var="service_account_client_email=${{ secrets.TEST_SERVICE_ACCOUNT_CLIENT_EMAIL }}" \
-            -var="service_account_client_id=${{ secrets.TEST_SERVICE_ACCOUNT_CLIENT_ID }}" \
-            -var="service_account_auth_uri=${{ secrets.TEST_SERVICE_ACCOUNT_AUTH_URI }}" \
-            -var="service_account_token_uri=${{ secrets.TEST_SERVICE_ACCOUNT_TOKEN_URI }}" \
-            -var="service_account_auth_provider_cert_url=${{ secrets.TEST_SERVICE_ACCOUNT_AUTH_PROVIDER_CERT_URL }}" \
-            -var="service_account_client_cert_url=${{ secrets.TEST_SERVICE_ACCOUNT_CLIENT_CERT_URL }}" \
-            -var-file="environments/test/terraform.tfvars"
+          terraform apply -auto-approve -var-file="environments/test/terraform.tfvars"
 
-  # Job for deploying to the production environment (disabled by default).
+  # Deploy to Production Environment (disabled by default, enable by changing the condition).
   deploy-prod:
     name: Deploy to Production Environment # Job identifier for the production environment.
     needs: deploy-test # Ensure that the test deployment is successful before running this job.
@@ -101,18 +87,4 @@ jobs:
             -backend-config="key=prod/terraform.tfstate" \
             -backend-config="region=${{ secrets.AWS_DEFAULT_REGION }}" \
             -backend-config="encrypt=true"
-          terraform apply -auto-approve \
-            -var="telegram_bot_token=${{ secrets.PROD_TELEGRAM_BOT_TOKEN }}" \
-            -var="admin_chat_id=${{ secrets.PROD_ADMIN_CHAT_ID }}" \
-            -var="google_sheet_id=${{ secrets.PROD_GOOGLE_SHEET_ID }}" \
-            -var="service_account_type=${{ secrets.PROD_SERVICE_ACCOUNT_TYPE }}" \
-            -var="service_account_project_id=${{ secrets.PROD_SERVICE_ACCOUNT_PROJECT_ID }}" \
-            -var="service_account_private_key_id=${{ secrets.PROD_SERVICE_ACCOUNT_PRIVATE_KEY_ID }}" \
-            -var="service_account_private_key=${{ secrets.PROD_SERVICE_ACCOUNT_PRIVATE_KEY }}" \
-            -var="service_account_client_email=${{ secrets.PROD_SERVICE_ACCOUNT_CLIENT_EMAIL }}" \
-            -var="service_account_client_id=${{ secrets.PROD_SERVICE_ACCOUNT_CLIENT_ID }}" \
-            -var="service_account_auth_uri=${{ secrets.PROD_SERVICE_ACCOUNT_AUTH_URI }}" \
-            -var="service_account_token_uri=${{ secrets.PROD_SERVICE_ACCOUNT_TOKEN_URI }}" \
-            -var="service_account_auth_provider_cert_url=${{ secrets.PROD_SERVICE_ACCOUNT_AUTH_PROVIDER_CERT_URL }}" \
-            -var="service_account_client_cert_url=${{ secrets.PROD_SERVICE_ACCOUNT_CLIENT_CERT_URL }}" \
-            -var-file="environments/prod/terraform.tfvars"
+          terraform apply -auto-approve -var-file="environments/prod/terraform.tfvars"
