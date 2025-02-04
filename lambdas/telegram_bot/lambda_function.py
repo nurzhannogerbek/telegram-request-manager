@@ -1,6 +1,7 @@
 import os
 import json
 import asyncio
+from telegram import Update
 from shared.telegram_bot.main import TelegramBot
 
 # Initialize the bot globally.
@@ -16,10 +17,11 @@ async def async_lambda_handler(event):
     """
     try:
         # Parse the incoming event as a Telegram update.
-        update = json.loads(event["body"])
+        update_data = json.loads(event["body"])
+        update = Update.de_json(update_data, bot.application.bot)
 
-        # Process the update using the global bot instance.
-        await bot.application.initialize()  # Proper initialization for async context.
+        # Initialize the application and process the update.
+        await bot.application.initialize()
         await bot.application.process_update(update)
 
         # Return HTTP 200 (success response) to Telegram.
