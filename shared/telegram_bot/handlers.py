@@ -143,9 +143,12 @@ class BotHandlers:
             if query.data == "privacy_accept":
                 logger.info(f"User {user_id} accepted the privacy policy.")  # Log acceptance.
 
-                # Initialize a new application form for the user.
-                self.user_forms[user_id] = ApplicationForm(lang, self.localization)
-                question = self.user_forms[user_id].get_next_question()
+                # Initialize and store a new application form for the user using the selected language.
+                form = ApplicationForm(lang, self.localization)
+                self.user_forms[user_id] = form  # Ensure the form is properly stored.
+
+                # Get the first question of the form.
+                question = form.get_next_question()
                 start_message = self.localization.get_string(lang, "start_questionnaire")
 
                 # Log form initialization for debugging purposes.

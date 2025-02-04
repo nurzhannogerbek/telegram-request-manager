@@ -35,7 +35,13 @@ class ApplicationForm:
         if self.current_question_index < len(self.questions):
             # Map the current question to the user's response.
             current_question = self.questions[self.current_question_index]
-            self.responses[current_question] = response.strip()  # Save response with whitespace removed.
+            response = response.strip()
+
+            # Do not save empty responses; log an error or handle it accordingly.
+            if not response:
+                raise ValueError("The response cannot be empty.")
+
+            self.responses[current_question] = response  # Save response.
             self.current_question_index += 1  # Move to the next question.
 
     def is_complete(self):
@@ -45,8 +51,9 @@ class ApplicationForm:
         :return: True if all questions have been answered, False otherwise.
         """
         # Check if all questions have corresponding non-empty responses.
-        return self.current_question_index >= len(self.questions) and all(
-            self.responses.get(question, "").strip() for question in self.questions
+        return (
+                self.current_question_index >= len(self.questions)
+                and all(self.responses.get(question, "").strip() for question in self.questions)
         )
 
     def get_unanswered_questions(self):
