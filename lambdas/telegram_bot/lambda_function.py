@@ -3,6 +3,7 @@ import json
 import asyncio
 from shared.telegram_bot.main import TelegramBot
 
+
 def lambda_handler(event, context):
     """
     Entry point for the AWS Lambda function handling Telegram webhooks.
@@ -23,7 +24,8 @@ def lambda_handler(event, context):
         # Parse the incoming event as a Telegram update.
         update = json.loads(event["body"])
 
-        # Use asyncio event loop to run the async function.
+        # Use asyncio to handle the update asynchronously.
+        asyncio.run(bot.application.initialize())  # Proper initialization of Application.
         asyncio.run(bot.process_update(update))
 
         # Return HTTP 200 (success response) to Telegram.
