@@ -1,3 +1,4 @@
+import re
 import logging
 from telegram.ext import CommandHandler, MessageHandler, CallbackQueryHandler, ChatJoinRequestHandler, filters
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
@@ -99,8 +100,12 @@ class BotHandlers:
             decline_button = self.localization.get_string(lang, "privacy_decline")
             prompt_text = self.localization.get_string(lang, "privacy_prompt")
 
-            # Construct the message content by embedding the hyperlink using markdown.
-            message_text = f"{prompt_text}\n\n[{policy_link_text}]({privacy_policy_url})"
+            # Escape special characters for MarkdownV2
+            escaped_url = re.sub(r'([_.!~*\'()\[\]])', r'\\\1', privacy_policy_url)
+            escaped_link_text = re.sub(r'([_.!~*\'()\[\]])', r'\\\1', policy_link_text)
+
+            # Construct the message content with a properly escaped clickable link to the policy.
+            message_text = f"{prompt_text}\n\n[{escaped_link_text}]({escaped_url})"
 
             # Build the inline keyboard with buttons for user responses.
             keyboard = [
@@ -116,14 +121,14 @@ class BotHandlers:
                 await update.callback_query.edit_message_text(
                     text=message_text,
                     reply_markup=InlineKeyboardMarkup(keyboard),
-                    parse_mode="Markdown"
+                    parse_mode="MarkdownV2"
                 )
             else:
                 # Send a new message when triggered by a regular message.
                 await update.message.reply_text(
                     text=message_text,
                     reply_markup=InlineKeyboardMarkup(keyboard),
-                    parse_mode="Markdown"
+                    parse_mode="MarkdownV2"
                 )
 
         except Exception as e:
