@@ -50,9 +50,9 @@ jobs:
           ADMIN_CHAT_ID: ${{ secrets.TEST_ADMIN_CHAT_ID }} # Test admin chat ID to handle notifications.
           GOOGLE_SHEET_ID: ${{ secrets.TEST_GOOGLE_SHEET_ID }} # Test Google Sheet ID for storing responses.
           SERVICE_ACCOUNT_PRIVATE_KEY: ${{ secrets.TEST_SERVICE_ACCOUNT_PRIVATE_KEY }} # Test service account private key used for authentication with Google APIs.
-          PRIVACY_POLICY_URL_RU: ${{ secrets.PRIVACY_POLICY_URL_RU }} # Russian version of the privacy policy URL.
-          PRIVACY_POLICY_URL_EN: ${{ secrets.PRIVACY_POLICY_URL_EN }} # English version of the privacy policy URL.
-          PRIVACY_POLICY_URL_KZ: ${{ secrets.PRIVACY_POLICY_URL_KZ }} # Kazakh version of the privacy policy URL.
+          PRIVACY_POLICY_RU: ${{ secrets.PRIVACY_POLICY_RU }} # Russian version of the privacy policy.
+          PRIVACY_POLICY_EN: ${{ secrets.PRIVACY_POLICY_EN }} # English version of the privacy policy.
+          PRIVACY_POLICY_KZ: ${{ secrets.PRIVACY_POLICY_KZ }} # Kazakh version of the privacy policy.
         working-directory: deployment/terraform # Set the working directory to where Terraform files are located.
         run: |
           terraform init \
@@ -77,9 +77,9 @@ jobs:
             -var="service_account_auth_provider_cert_url=${{ secrets.TEST_SERVICE_ACCOUNT_AUTH_PROVIDER_CERT_URL }}" \
             -var="service_account_client_cert_url=${{ secrets.TEST_SERVICE_ACCOUNT_CLIENT_CERT_URL }}" \
             -var="aws_region=${{ secrets.AWS_DEFAULT_REGION }}" \
-            -var="privacy_policy_url_ru=${{ secrets.PRIVACY_POLICY_URL_RU }}" \
-            -var="privacy_policy_url_en=${{ secrets.PRIVACY_POLICY_URL_EN }}" \
-            -var="privacy_policy_url_kz=${{ secrets.PRIVACY_POLICY_URL_KZ }}" \
+            -var="privacy_policy_ru=${{ secrets.PRIVACY_POLICY_RU }}" \
+            -var="privacy_policy_en=${{ secrets.PRIVACY_POLICY_EN }}" \
+            -var="privacy_policy_kz=${{ secrets.PRIVACY_POLICY_KZ }}" \
             -auto-approve
 
   # Deploy to Production Environment (disabled by default for manual activation).
@@ -122,9 +122,9 @@ jobs:
           ADMIN_CHAT_ID: ${{ secrets.PROD_ADMIN_CHAT_ID }} # Production admin chat ID to handle notifications.
           GOOGLE_SHEET_ID: ${{ secrets.PROD_GOOGLE_SHEET_ID }} # Production Google Sheet ID for storing responses.
           SERVICE_ACCOUNT_PRIVATE_KEY: ${{ secrets.PROD_SERVICE_ACCOUNT_PRIVATE_KEY }} # Production service account private key used for authentication with Google APIs.
-          PRIVACY_POLICY_URL_RU: ${{ secrets.PRIVACY_POLICY_URL_RU }} # Russian version of the privacy policy URL.
-          PRIVACY_POLICY_URL_EN: ${{ secrets.PRIVACY_POLICY_URL_EN }} # English version of the privacy policy URL.
-          PRIVACY_POLICY_URL_KZ: ${{ secrets.PRIVACY_POLICY_URL_KZ }} # Kazakh version of the privacy policy URL.
+          PRIVACY_POLICY_RU: ${{ secrets.PRIVACY_POLICY_RU }} # Russian version of the privacy policy.
+          PRIVACY_POLICY_EN: ${{ secrets.PRIVACY_POLICY_EN }} # English version of the privacy policy.
+          PRIVACY_POLICY_KZ: ${{ secrets.PRIVACY_POLICY_KZ }} # Kazakh version of the privacy policy.
         working-directory: deployment/terraform # Set the working directory to where Terraform files are located.
         run: |
           terraform init \
@@ -149,7 +149,7 @@ jobs:
             -var="service_account_auth_provider_cert_url=${{ secrets.PROD_SERVICE_ACCOUNT_AUTH_PROVIDER_CERT_URL }}" \
             -var="service_account_client_cert_url=${{ secrets.PROD_SERVICE_ACCOUNT_CLIENT_CERT_URL }}" \
             -var="aws_region=${{ secrets.AWS_DEFAULT_REGION }}" \
-            -var="privacy_policy_url_ru=${{ secrets.PRIVACY_POLICY_URL_RU }}" \
-            -var="privacy_policy_url_en=${{ secrets.PRIVACY_POLICY_URL_EN }}" \
-            -var="privacy_policy_url_kz=${{ secrets.PRIVACY_POLICY_URL_KZ }}" \
+            -var="privacy_policy_ru=${{ secrets.PRIVACY_POLICY_RU }}" \
+            -var="privacy_policy_en=${{ secrets.PRIVACY_POLICY_EN }}" \
+            -var="privacy_policy_kz=${{ secrets.PRIVACY_POLICY_KZ }}" \
             -auto-approve

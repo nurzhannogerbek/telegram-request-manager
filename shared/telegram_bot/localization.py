@@ -22,7 +22,8 @@ class Localization:
                 "fill_missing_data": "Вы не предоставили все необходимые данные. Ваша заявка отклонена.",
                 "error_message": "Произошла ошибка. Пожалуйста, попробуйте позже.",
                 "privacy_policy_request": "Ознакомьтесь с нашей политикой конфиденциальности.",
-                "form_reminder": "Напоминаем, что вы не закончили заполнение анкеты. Пожалуйста, завершите её, чтобы получить доступ к группе."
+                "form_reminder": "Напоминаем, что вы не закончили заполнение анкеты. Пожалуйста, завершите её, чтобы получить доступ к группе.",
+                "show_more": "Показать полностью"
             },
             "kz": {
                 "privacy_accept": "Қабылдаймын",
@@ -35,7 +36,8 @@ class Localization:
                 "fill_missing_data": "Сіз барлық қажетті деректерді бермедіңіз. Сіздің өтініміңіз қабылданбады.",
                 "error_message": "Қате орын алды. Кейінірек қайталап көріңіз.",
                 "privacy_policy_request": "Құпиялылық саясатымен танысыңыз.",
-                "form_reminder": "Сіз анкетаны толтырып бітірген жоқсыз. Топқа кіру үшін анкетаны аяқтаңыз."
+                "form_reminder": "Сіз анкетаны толтырып бітірген жоқсыз. Топқа кіру үшін анкетаны аяқтаңыз.",
+                "show_more": "Толығырақ көрсету"
             },
             "en": {
                 "privacy_accept": "Agree",
@@ -48,7 +50,8 @@ class Localization:
                 "fill_missing_data": "You did not provide all the required data. Your application has been declined.",
                 "error_message": "An error occurred. Please try again later.",
                 "privacy_policy_request": "Please review our privacy policy.",
-                "form_reminder": "Reminder: You have not completed the form. Please finish it to gain access to the group."
+                "form_reminder": "Reminder: You have not completed the form. Please finish it to gain access to the group.",
+                "show_more": "Show more"
             }
         }
 

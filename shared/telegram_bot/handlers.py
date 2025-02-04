@@ -82,32 +82,26 @@ class BotHandlers:
 
             logger.info(f"Sending privacy policy to user {user_id} in language {lang}.")  # Log the action.
 
-            # Retrieve the privacy policy and button texts.
-            privacy_policy_text = self.utils.fetch_privacy_policy(lang)
-            if "Privacy policy URL is not configured" in privacy_policy_text:
-                privacy_policy_text = self.localization.get_string(lang, "error_policy_url")
+            # Retrieve the privacy policy text
+            privacy_policy_text = context.bot_data.get(f"privacy_policy_{lang}", "Privacy policy is currently unavailable.")
 
-            accept_button = self.localization.get_string(lang, "privacy_accept")
-            decline_button = self.localization.get_string(lang, "privacy_decline")
-            prompt_text = self.localization.get_string(lang, "privacy_prompt")
+            # Shorten the text for the initial display and provide a "Show more" button
+            short_text = f"{privacy_policy_text[:300]}...\n\n"
+            show_more_button = InlineKeyboardButton(self.localization.get_string(lang, "show_more"), callback_data=f"show_more_{lang}")
 
             # Build the inline keyboard for user response.
-            keyboard = [[
-                InlineKeyboardButton(accept_button, callback_data="privacy_accept"),
-                InlineKeyboardButton(decline_button, callback_data="privacy_decline")
-            ]]
+            keyboard = [
+                [InlineKeyboardButton(self.localization.get_string(lang, "privacy_accept"), callback_data="privacy_accept")],
+                [InlineKeyboardButton(self.localization.get_string(lang, "privacy_decline"), callback_data="privacy_decline")],
+                [show_more_button]
+            ]
 
             # Send the privacy policy with response buttons.
-            if update.callback_query:
-                await update.callback_query.edit_message_text(
-                    text=f"{prompt_text}\n\n{privacy_policy_text}",
-                    reply_markup=InlineKeyboardMarkup(keyboard)
-                )
-            else:
-                await update.message.reply_text(
-                    text=f"{prompt_text}\n\n{privacy_policy_text}",
-                    reply_markup=InlineKeyboardMarkup(keyboard)
-                )
+            await context.bot.send_message(
+                chat_id=user_id,
+                text=short_text,
+                reply_markup=InlineKeyboardMarkup(keyboard)
+            )
 
         except Exception as e:
             logger.error(f"Error in send_privacy_policy handler: {e}")
@@ -131,6 +125,9 @@ class BotHandlers:
                 question = self.user_forms[user_id].get_next_question()
                 start_message = self.localization.get_string(lang, "start_questionnaire")
 
+                # Log form initialization for debugging purposes.
+                logger.info(f"Form initialized for user {user_id}. First question: {question}")
+
                 # Send the first question of the form.
                 await query.edit_message_text(f"{start_message} {question}")
 
@@ -148,10 +145,9 @@ class BotHandlers:
         """
         Processes user responses and manages the application form flow.
         """
-        user_id = update.message.from_user.id  # Extract the user ID from the update object.
-        lang = context.user_data.get("lang", "en")  # Default to English to avoid uninitialized reference.
-
         try:
+            user_id = update.message.from_user.id  # Extract the user ID from the update object.
+            lang = context.user_data.get("lang", "en")  # Get the user's selected language.
             form = self.user_forms.get(user_id)  # Retrieve the active form for the user.
 
             if not form:
@@ -185,7 +181,6 @@ class BotHandlers:
 
         except Exception as e:
             logger.error(f"Error in handle_response handler: {e}")
-            await update.message.reply_text(self.localization.get_string(lang, "error_message"))
 
     async def handle_join_request(self, update: Update, context):
         """

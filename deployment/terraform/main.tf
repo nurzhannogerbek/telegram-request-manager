@@ -52,9 +52,9 @@ resource "aws_lambda_function" "telegram_bot" {
       SERVICE_ACCOUNT_TOKEN_URI                 = var.service_account_token_uri
       SERVICE_ACCOUNT_AUTH_PROVIDER_CERT_URL    = var.service_account_auth_provider_cert_url
       SERVICE_ACCOUNT_CLIENT_CERT_URL           = var.service_account_client_cert_url
-      PRIVACY_POLICY_URL_RU                     = var.privacy_policy_url_ru
-      PRIVACY_POLICY_URL_EN                     = var.privacy_policy_url_en
-      PRIVACY_POLICY_URL_KZ                     = var.privacy_policy_url_kz
+      PRIVACY_POLICY_URL_RU                     = var.privacy_policy_ru
+      PRIVACY_POLICY_URL_EN                     = var.privacy_policy_en
+      PRIVACY_POLICY_URL_KZ                     = var.privacy_policy_kz
     }
   }
 
