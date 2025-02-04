@@ -1,4 +1,3 @@
-import logging
 from telegram.ext import CommandHandler, MessageHandler, CallbackQueryHandler, ChatJoinRequestHandler, filters
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from shared.telegram_bot.forms import ApplicationForm
@@ -6,41 +5,41 @@ from shared.telegram_bot.localization import Localization
 from shared.telegram_bot.google_sheets import GoogleSheets
 from shared.telegram_bot.utils import Utils
 
-# Configure logging to track bot activities and errors (if needed in future)
-logging.basicConfig(level=logging.INFO)
-
 class BotHandlers:
     """
-    Class to manage all bot command and message handlers.
+    Class to handle bot commands, messages, and user interactions for the application form.
     """
 
     def __init__(self):
         """
-        Initializes required components for handling user interactions, localization,
-        Google Sheets integration, and utility functions.
+        Initializes the bot handlers with necessary components including localization,
+        Google Sheets integration, and user-specific application forms.
         """
-        self.user_forms = {}  # Stores active user forms and language preferences keyed by user ID.
-        self.localization = Localization()  # Handles localization for user interactions.
-        self.google_sheets = GoogleSheets()  # Manages Google Sheets for storing user data.
-        self.utils = Utils()  # Provides utility functions like admin notifications.
+        self.user_forms = {}  # Dictionary to store active application forms keyed by user ID.
+        self.localization = Localization()  # Handles localized strings and questions.
+        self.google_sheets = GoogleSheets()  # Manages Google Sheets data storage.
+        self.utils = Utils()  # Utility functions, including notifications.
 
     async def start(self, update, context):
         """
-        Handles the /start command to initialize language selection.
-        Sends a multilingual welcome message with inline buttons for the user to choose their preferred language.
+        Handles the /start command to begin language selection.
+        Sends a welcome message with language options.
+
+        :param update: The update object containing information about the incoming message.
+        :param context: The context object to manage user-specific data.
         """
         try:
-            user_id = update.effective_user.id  # Get user ID from the update object.
-            print(f"User {user_id} issued the /start command.")  # Log the start command.
+            user_id = update.effective_user.id  # Get the user ID initiating the command.
+            print(f"User {user_id} issued the /start command.")
 
-            # Display language options as inline buttons.
+            # Language selection buttons.
             keyboard = [[
                 InlineKeyboardButton("Русский", callback_data="lang_ru"),
                 InlineKeyboardButton("Қазақша", callback_data="lang_kz"),
                 InlineKeyboardButton("English", callback_data="lang_en")
             ]]
 
-            # Send the multilingual welcome message.
+            # Send welcome message with language selection options.
             await context.bot.send_message(
                 chat_id=user_id,
                 text=self.localization.get_multilang_welcome_message(),
@@ -51,52 +50,50 @@ class BotHandlers:
 
     async def set_language(self, update, context):
         """
-        Sets the user's language based on their selection and sends the privacy policy.
+        Handles the language selection and stores it in the context.
+        Sends the privacy policy in the selected language.
+
+        :param update: The update object containing the callback query.
+        :param context: The context object to store user-specific data.
         """
-        query = update.callback_query  # Extract the callback query object.
-        await query.answer()  # Acknowledge the callback query.
+        query = update.callback_query  # Get callback query.
+        await query.answer()  # Acknowledge the query.
 
         try:
-            user_id = query.from_user.id  # Get user ID from the query object.
+            user_id = query.from_user.id  # Get user ID.
             lang = query.data.split("_")[1]  # Extract the selected language code.
 
-            print(f"User {user_id} selected language: {lang}.")  # Log the language selection.
+            print(f"User {user_id} selected language: {lang}.")
+            context.user_data["lang"] = lang  # Store language in context.
 
-            # Store the selected language in self.user_forms
-            self.user_forms[user_id] = {"lang": lang}
-
-            # Send the privacy policy using the selected language.
+            # Send the privacy policy using the chosen language.
             await self.send_privacy_policy(update, context)
-
         except Exception as e:
             print(f"Error in set_language handler: {e}")
 
     async def send_privacy_policy(self, update, context):
         """
-        Sends the privacy policy link to the user and asks for their consent using inline buttons.
+        Sends the privacy policy link in the user's selected language and prompts for consent.
 
-        :param update: The Telegram update object, containing details of the incoming message or query.
-        :param context: The context object, providing access to user-specific data and bot configuration.
+        :param update: The update object containing callback query or message.
+        :param context: The context object storing user-specific data.
         """
         try:
-            # Extract the user ID from either a callback query or message, depending on how the function was triggered.
             user_id = update.callback_query.from_user.id if update.callback_query else update.message.from_user.id
-            lang = self.user_forms.get(user_id, {}).get("lang", "en")  # Retrieve the selected language.
+            lang = context.user_data.get("lang", "en")  # Get user's selected language.
 
             print(f"Sending privacy policy to user {user_id} in language '{lang}'.")
 
-            # Retrieve the URL of the privacy policy as a clickable link using the localized text.
+            # Get the URL of the privacy policy and localized text.
             privacy_policy_link = self.utils.fetch_privacy_policy(lang, self.localization)
-
-            # Retrieve button and prompt texts for the chosen language.
             accept_button = self.localization.get_string(lang, "privacy_accept")
             decline_button = self.localization.get_string(lang, "privacy_decline")
             prompt_text = self.localization.get_string(lang, "privacy_prompt")
 
-            # Construct the message content by combining the prompt and the clickable link to the policy.
+            # Construct the message combining the privacy policy link.
             message_text = f"{prompt_text}\n\n{privacy_policy_link}"
 
-            # Build the inline keyboard with buttons for user responses.
+            # Inline buttons for consent.
             keyboard = [
                 [
                     InlineKeyboardButton(accept_button, callback_data="privacy_accept"),
@@ -104,44 +101,38 @@ class BotHandlers:
                 ]
             ]
 
-            # Send the message depending on how the function was triggered.
+            # Send or edit the message based on how it was triggered.
             if update.callback_query:
-                # Edit the existing message when triggered by a callback query.
                 await update.callback_query.edit_message_text(
-                    text=message_text,
-                    reply_markup=InlineKeyboardMarkup(keyboard),
-                    parse_mode="Markdown"
-                )
+                    text=message_text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown")
             else:
-                # Send a new message when triggered by a regular message.
                 await update.message.reply_text(
-                    text=message_text,
-                    reply_markup=InlineKeyboardMarkup(keyboard),
-                    parse_mode="Markdown"
-                )
+                    text=message_text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown")
 
         except Exception as e:
             print(f"Error in send_privacy_policy handler: {e}")
 
     async def handle_privacy_response(self, update, context):
         """
-        Handles the user's response to the privacy policy.
+        Handles user response to the privacy policy (accept/decline).
+        Starts the application form if accepted.
+
+        :param update: The update object containing callback query.
+        :param context: The context object storing user-specific data.
         """
-        query = update.callback_query
-        await query.answer()
+        query = update.callback_query  # Get callback query.
+        await query.answer()  # Acknowledge the response.
 
         try:
             user_id = query.from_user.id
-            lang = self.user_forms.get(user_id, {}).get("lang", "en")  # Retrieve the selected language.
-
-            print(f"User {user_id} responded to privacy policy in language '{lang}'.")
+            lang = context.user_data.get("lang", "en")  # Retrieve selected language.
 
             if query.data == "privacy_accept":
-                print(f"User {user_id} accepted the privacy policy.")
+                print(f"User {user_id} accepted the privacy policy in language '{lang}'.")
 
-                # Initialize a new application form and store it in user_forms.
+                # Initialize the application form and store it.
                 form = ApplicationForm(lang, self.localization)
-                self.user_forms[user_id] = {"form": form, "lang": lang}
+                self.user_forms[user_id] = form
 
                 # Get the first question.
                 question = form.get_next_question()
@@ -160,36 +151,36 @@ class BotHandlers:
 
     async def handle_response(self, update, context):
         """
-        Processes user responses and manages the application form flow.
+        Processes user responses and progresses through the application form.
+
+        :param update: The update object containing user messages.
+        :param context: The context object storing user-specific data.
         """
         try:
-            user_id = update.message.from_user.id
-            user_data = self.user_forms.get(user_id)
+            user_id = update.message.from_user.id  # Get user ID.
+            form = self.user_forms.get(user_id)  # Retrieve the user's form.
 
-            if not user_data:
-                print(f"User {user_id} tried to respond without starting the form.")
+            if not form:
+                print(f"Warning: User {user_id} tried to respond without starting the form.")
                 await update.message.reply_text(self.localization.get_string("en", "error_message"))
                 return
 
-            lang = user_data.get("lang", "en")
-            form = user_data.get("form")
+            # Use language stored in the form.
+            lang = form.lang
+            print(f"User {user_id} responding in language '{lang}'.")
 
-            if not form:
-                print(f"User {user_id} tried to respond without an active form.")
-                await update.message.reply_text(self.localization.get_string(lang, "error_message"))
-                return
-
-            print(f"Saving response from user {user_id}: {update.message.text}")
+            # Save the response and check form completion.
             form.save_response(update.message.text)
 
             if form.is_complete():
-                print(f"User {user_id} completed the form.")
+                print(f"User {user_id} completed the form. Saving responses.")
                 self.google_sheets.save_to_sheet(user_id, form.get_all_responses())
                 await update.message.reply_text(self.localization.get_string(lang, "application_complete"))
-                del self.user_forms[user_id]  # Clean up the form data.
+                del self.user_forms[user_id]  # Clean up form data.
+                await self.approve_join_request(user_id, context)
             else:
                 next_question = form.get_next_question()
-                print(f"Asking next question to user {user_id}: {next_question}")
+                print(f"Next question for user {user_id}: {next_question}")
                 await update.message.reply_text(next_question)
 
         except Exception as e:
@@ -197,32 +188,38 @@ class BotHandlers:
 
     async def handle_join_request(self, update: Update, context):
         """
-        Handles new join requests and starts the onboarding process by sending a multilingual welcome message.
+        Handles join requests and triggers the start of the onboarding process.
+
+        :param update: The update object containing join request details.
+        :param context: The context object storing user-specific data.
         """
         try:
             join_request = update.chat_join_request
             user_id = join_request.from_user.id
             print(f"Received join request from user {user_id}.")
             await self.start(update, context)
-
         except Exception as e:
             print(f"Error in handle_join_request handler: {e}")
 
     async def approve_join_request(self, user_id, context):
         """
-        Automatically approves the join request after the user completes the application.
+        Automatically approves the join request once the user completes the form.
+
+        :param user_id: The Telegram user ID of the user.
+        :param context: The context object storing user-specific data.
         """
         try:
             print(f"Approving join request for user {user_id}.")
             await context.bot.approve_chat_join_request(chat_id=context.chat_data["chat_id"], user_id=user_id)
             await self.utils.notify_admin(f"✅ User {user_id} has been approved to join the group.")
-
         except Exception as e:
             print(f"Error in approve_join_request handler: {e}")
 
     def setup(self, application):
         """
-        Registers all command, message, and join request handlers with the application.
+        Registers all handlers for commands and interactions.
+
+        :param application: The Telegram application object.
         """
         print("Setting up command and message handlers.")
         application.add_handler(CommandHandler("start", self.start))
