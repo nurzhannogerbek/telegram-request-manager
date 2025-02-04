@@ -12,12 +12,6 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def escape_markdown_v2(text):
-    """
-    Escapes special characters in a string for safe usage in Telegram messages with MarkdownV2.
-    """
-    return re.sub(r'([_*[\]()~`>#+-=|{}.!])', r'\\\1', text)
-
 class BotHandlers:
     """
     Class to manage all bot command and message handlers.
@@ -91,24 +85,21 @@ class BotHandlers:
             # Extract the user ID from either a callback query or message, depending on how the function was triggered.
             user_id = update.callback_query.from_user.id if update.callback_query else update.message.from_user.id
 
-            # Retrieve the user's preferred language from the context. Defaults to English ('en') if not set.
+            # Retrieve the user's preferred language from the context. Defaults to 'en' if not set.
             lang = context.user_data.get("lang", "en")
 
             logger.info(f"Sending privacy policy to user {user_id} in language '{lang}'.")
 
-            # Retrieve the URL of the privacy policy from environment variables using the utility method.
-            privacy_policy_url = escape_markdown_v2(self.utils.fetch_privacy_policy(lang))
+            # Retrieve the URL of the privacy policy as a clickable link using the localized text.
+            privacy_policy_link = self.utils.fetch_privacy_policy(lang, self.localization)
 
-            # Retrieve the localized text for the policy link and prompt.
-            policy_link_text = escape_markdown_v2(self.localization.get_string(lang, "privacy_policy_link_text"))
-            prompt_text = escape_markdown_v2(self.localization.get_string(lang, "privacy_prompt"))
-
-            # Retrieve button texts for the chosen language.
+            # Retrieve button and prompt texts for the chosen language.
             accept_button = self.localization.get_string(lang, "privacy_accept")
             decline_button = self.localization.get_string(lang, "privacy_decline")
+            prompt_text = self.localization.get_string(lang, "privacy_prompt")
 
             # Construct the message content by combining the prompt and the clickable link to the policy.
-            message_text = f"{prompt_text}\n\n[{policy_link_text}]({privacy_policy_url})"
+            message_text = f"{prompt_text}\n\n{privacy_policy_link}"
 
             # Build the inline keyboard with buttons for user responses.
             keyboard = [
@@ -124,14 +115,14 @@ class BotHandlers:
                 await update.callback_query.edit_message_text(
                     text=message_text,
                     reply_markup=InlineKeyboardMarkup(keyboard),
-                    parse_mode="MarkdownV2"
+                    parse_mode="Markdown"
                 )
             else:
                 # Send a new message when triggered by a regular message.
                 await update.message.reply_text(
                     text=message_text,
                     reply_markup=InlineKeyboardMarkup(keyboard),
-                    parse_mode="MarkdownV2"
+                    parse_mode="Markdown"
                 )
 
         except Exception as e:

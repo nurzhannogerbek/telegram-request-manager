@@ -62,11 +62,13 @@ class Utils:
             print(f"Error sending error notification to admin: {e}")
 
     @staticmethod
-    def fetch_privacy_policy(lang):
+    def fetch_privacy_policy(lang, localization):
         """
-        Fetches the privacy policy URL for the specified language from environment variables.
+        Fetches the privacy policy URL for the specified language from environment variables
+        and returns it as a properly formatted Markdown link.
 
         :param lang: Language code (e.g., 'ru', 'kz', 'en').
+        :param localization: Localization instance to get the translated link text.
         :return: Formatted URL text of the privacy policy or a fallback message if unavailable.
         """
         # Map language codes to corresponding environment variables containing URLs.
@@ -81,7 +83,10 @@ class Utils:
 
         # If no valid URL is found, return a fallback message.
         if not policy_url:
-            return "Privacy policy is currently unavailable. Please try again later."
+            return localization.get_string(lang, "error_message")  # Use localized fallback message.
 
-        # Return the URL formatted as clickable text in Markdown.
-        return f"🔗 [Click here to view the Privacy Policy]({policy_url})"
+        # Retrieve localized link text from localization.
+        link_text = localization.get_string(lang, "privacy_policy_link_text")
+
+        # Return the URL formatted as a Markdown clickable link.
+        return f"🔗[{link_text}]({policy_url})"
