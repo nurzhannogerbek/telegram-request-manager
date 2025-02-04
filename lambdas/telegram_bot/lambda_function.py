@@ -3,8 +3,11 @@ import json
 import asyncio
 from shared.telegram_bot.main import TelegramBot
 
-# Create a global instance of the bot for reuse across requests
-bot_instance = TelegramBot(os.getenv("TELEGRAM_BOT_TOKEN"))
+# Initialize the bot globally.
+token = os.getenv("TELEGRAM_BOT_TOKEN")
+if not token:
+    raise EnvironmentError("TELEGRAM_BOT_TOKEN environment variable is not set.")
+bot = TelegramBot(token)
 
 async def async_lambda_handler(event):
     """
@@ -15,8 +18,9 @@ async def async_lambda_handler(event):
         # Parse the incoming event as a Telegram update.
         update = json.loads(event["body"])
 
-        # Process the update using the bot instance.
-        await bot_instance.application.process_update(update)
+        # Process the update using the global bot instance.
+        await bot.application.initialize()  # Proper initialization for async context.
+        await bot.application.process_update(update)
 
         # Return HTTP 200 (success response) to Telegram.
         return {
@@ -38,5 +42,4 @@ def lambda_handler(event, context):
     """
     Synchronous entry point for AWS Lambda, runs the asynchronous handler.
     """
-    # Ensure that the asynchronous handler is correctly executed.
     return asyncio.run(async_lambda_handler(event))
