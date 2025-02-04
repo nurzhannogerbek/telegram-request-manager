@@ -121,30 +121,40 @@ class BotHandlers:
 
     async def handle_privacy_response(self, update, context):
         """
-        Handles the user's response to the privacy policy (accept/decline).
+        Handles user response to the privacy policy (accept/decline).
+        Starts the application form if accepted.
 
-        :param update: The Telegram update object containing the callback query.
+        :param update: The update object containing callback query.
         :param context: The context object storing user-specific data.
         """
-        query = update.callback_query
-        await query.answer()
+        query = update.callback_query  # Get callback query.
+        await query.answer()  # Acknowledge the response.
 
         try:
             user_id = query.from_user.id
-            lang = context.user_data.get("lang") or self.google_sheets.get_user_state(user_id)
+
+            # Correctly retrieve user state, and destructure values into separate variables.
+            lang, current_question_index, responses = self.google_sheets.get_user_state(user_id)
+
+            if not lang:
+                # Fallback to default language if state is not found.
+                lang = context.user_data.get("lang", "en")
+                print(f"Warning: No saved state found for user {user_id}, defaulting to language '{lang}'.")
 
             if query.data == "privacy_accept":
                 print(f"User {user_id} accepted the privacy policy in language '{lang}'.")
 
-                # Initialize the application form and store it.
+                # Initialize the application form and set its state.
                 form = ApplicationForm(lang, self.localization)
+                form.current_question_index = current_question_index  # Resume from saved question.
+                form.responses = responses  # Load previously saved responses.
                 self.user_forms[user_id] = form
 
-                # Get the first question and send it to the user.
+                # Get the next question based on the saved state.
                 question = form.get_next_question()
                 start_message = self.localization.get_string(lang, "start_questionnaire")
-                print(f"First question for user {user_id}: {question}")
 
+                print(f"First question for user {user_id}: {question}")
                 await query.edit_message_text(f"{start_message} {question}")
 
             elif query.data == "privacy_decline":
