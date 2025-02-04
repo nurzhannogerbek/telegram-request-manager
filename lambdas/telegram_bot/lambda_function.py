@@ -4,23 +4,23 @@ import asyncio
 from telegram import Update
 from shared.telegram_bot.main import TelegramBot
 
-# Initialize the bot globally.
-token = os.getenv("TELEGRAM_BOT_TOKEN")
-if not token:
-    raise EnvironmentError("TELEGRAM_BOT_TOKEN environment variable is not set.")
-bot = TelegramBot(token)
-
 async def async_lambda_handler(event):
     """
     Asynchronous entry point for handling Telegram updates in AWS Lambda.
     :param event: The event data passed by the Lambda trigger.
     """
+    # Initialize bot instance inside the handler to avoid shared states between invocations.
+    token = os.getenv("TELEGRAM_BOT_TOKEN")
+    if not token:
+        raise EnvironmentError("TELEGRAM_BOT_TOKEN environment variable is not set.")
+    bot = TelegramBot(token)
+
     try:
         # Parse the incoming event as a Telegram update.
         update_data = json.loads(event["body"])
         update = Update.de_json(update_data, bot.application.bot)
 
-        # Initialize the application and process the update.
+        # Initialize and process the update.
         await bot.application.initialize()
         await bot.application.process_update(update)
 

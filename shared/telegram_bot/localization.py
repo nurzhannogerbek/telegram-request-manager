@@ -52,12 +52,12 @@ class Localization:
             }
         }
 
-        # Combined multilingual welcome message
+        # Combined multilingual welcome message.
         self.welcome_message_multilang = (
             "Welcome! Қош келдіңіз! Добро пожаловать!\n\n"
-            "Для продолжения выберите язык:\n"
+            "To continue, please choose a language:\n"
             "Жалғастыру үшін тілді таңдаңыз:\n"
-            "To continue, please choose a language:"
+            "Для продолжения выберите язык:"
         )
 
         # Dictionary containing questions for multiple languages.
