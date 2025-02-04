@@ -11,6 +11,13 @@ from shared.telegram_bot.utils import Utils
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
+def escape_markdown_v2(text):
+    """
+    Escapes special characters in a string for safe usage in Telegram messages with MarkdownV2.
+    """
+    return re.sub(r'([_*[\]()~`>#+-=|{}.!])', r'\\\1', text)
+
 class BotHandlers:
     """
     Class to manage all bot command and message handlers.
@@ -90,26 +97,18 @@ class BotHandlers:
             logger.info(f"Sending privacy policy to user {user_id} in language '{lang}'.")
 
             # Retrieve the URL of the privacy policy from environment variables using the utility method.
-            privacy_policy_url = self.utils.fetch_privacy_policy(lang)
+            privacy_policy_url = escape_markdown_v2(self.utils.fetch_privacy_policy(lang))
 
-            # Retrieve the localized text for the policy link.
-            policy_link_text = self.localization.get_string(lang, "privacy_policy_link_text")
+            # Retrieve the localized text for the policy link and prompt.
+            policy_link_text = escape_markdown_v2(self.localization.get_string(lang, "privacy_policy_link_text"))
+            prompt_text = escape_markdown_v2(self.localization.get_string(lang, "privacy_prompt"))
 
-            # Retrieve button and prompt texts for the chosen language.
+            # Retrieve button texts for the chosen language.
             accept_button = self.localization.get_string(lang, "privacy_accept")
             decline_button = self.localization.get_string(lang, "privacy_decline")
-            prompt_text = self.localization.get_string(lang, "privacy_prompt")
 
-            # Function to escape special characters for MarkdownV2
-            def escape_markdown_v2(text):
-                return re.sub(r'([_*\[\]()~`>#+\-=|{}.!])', r'\\\1', text)
-
-            # Escape the URL and link text for MarkdownV2
-            escaped_url = escape_markdown_v2(privacy_policy_url)
-            escaped_link_text = escape_markdown_v2(policy_link_text)
-
-            # Construct the message content with a properly escaped clickable link to the policy.
-            message_text = f"{prompt_text}\n\n[{escaped_link_text}]({escaped_url})"
+            # Construct the message content by combining the prompt and the clickable link to the policy.
+            message_text = f"{prompt_text}\n\n[{policy_link_text}]({privacy_policy_url})"
 
             # Build the inline keyboard with buttons for user responses.
             keyboard = [
