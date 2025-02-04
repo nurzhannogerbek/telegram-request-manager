@@ -32,9 +32,9 @@ class GoogleSheets:
         }
 
         # Debug: Log the first 10 characters of sensitive environment variables to ensure correct loading.
-        logger.info(f"Debug: SERVICE_ACCOUNT_PRIVATE_KEY starts with: {service_account_info['private_key'][:10]}...")
-        logger.info(f"Debug: SERVICE_ACCOUNT_CLIENT_EMAIL: {service_account_info['client_email'][:5]}...")
-        logger.info(f"Debug: SERVICE_ACCOUNT_PROJECT_ID: {service_account_info['project_id']}")
+        print(f"Debug: SERVICE_ACCOUNT_PRIVATE_KEY starts with: {service_account_info['private_key'][:10]}...")
+        print(f"Debug: SERVICE_ACCOUNT_CLIENT_EMAIL: {service_account_info['client_email'][:5]}...")
+        print(f"Debug: SERVICE_ACCOUNT_PROJECT_ID: {service_account_info['project_id']}")
 
         # Specify required scopes for Google Sheets API.
         scopes = ["https://www.googleapis.com/auth/spreadsheets"]
@@ -51,7 +51,7 @@ class GoogleSheets:
         self.sheet = self.client.open_by_key(sheet_id).sheet1
 
         # Log successful connection.
-        logger.info("Successfully connected to Google Sheets.")
+        print("Successfully connected to Google Sheets.")
 
     def save_to_sheet(self, user_id, responses):
         """
@@ -64,12 +64,12 @@ class GoogleSheets:
             # Prepare the row: user ID followed by all response values.
             row = [str(user_id)] + list(responses.values())
             # Log saving action.
-            logger.info(f"Saving responses to Google Sheets for user {user_id}: {responses}.")
+            print(f"Saving responses to Google Sheets for user {user_id}: {responses}.")
 
             # Append the row to the Google Sheet.
             self.sheet.append_row(row)
             # Log success.
-            logger.info(f"Successfully saved responses for user {user_id}.")
+            print(f"Successfully saved responses for user {user_id}.")
 
         except Exception as e:
             # Log any errors.
@@ -97,4 +97,4 @@ class GoogleSheets:
                 logger.error(f"Missing required service account field: {key}.")
                 raise ValueError(f"Missing required service account field: {key}.")
         # Log successful validation.
-        logger.info("Service account credentials validated successfully.")
+        print("Service account credentials validated successfully.")
