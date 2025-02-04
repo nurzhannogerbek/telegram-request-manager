@@ -66,7 +66,7 @@ class BotHandlers:
             # Store the selected language for the user in the context.
             context.user_data["lang"] = lang
 
-            # Proceed to send the privacy policy.
+            # Send the privacy policy using the correct language.
             await self.send_privacy_policy(update, context)
 
         except Exception as e:
@@ -84,6 +84,9 @@ class BotHandlers:
 
             # Retrieve the privacy policy and button texts.
             privacy_policy_text = self.utils.fetch_privacy_policy(lang)
+            if "Privacy policy URL is not configured" in privacy_policy_text:
+                privacy_policy_text = self.localization.get_string(lang, "error_policy_url")
+
             accept_button = self.localization.get_string(lang, "privacy_accept")
             decline_button = self.localization.get_string(lang, "privacy_decline")
             prompt_text = self.localization.get_string(lang, "privacy_prompt")
@@ -145,9 +148,10 @@ class BotHandlers:
         """
         Processes user responses and manages the application form flow.
         """
+        user_id = update.message.from_user.id  # Extract the user ID from the update object.
+        lang = context.user_data.get("lang", "en")  # Default to English to avoid uninitialized reference.
+
         try:
-            user_id = update.message.from_user.id  # Extract the user ID from the update object.
-            lang = context.user_data.get("lang", "en")  # Get the user's selected language.
             form = self.user_forms.get(user_id)  # Retrieve the active form for the user.
 
             if not form:
@@ -181,6 +185,7 @@ class BotHandlers:
 
         except Exception as e:
             logger.error(f"Error in handle_response handler: {e}")
+            await update.message.reply_text(self.localization.get_string(lang, "error_message"))
 
     async def handle_join_request(self, update: Update, context):
         """

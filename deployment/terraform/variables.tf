@@ -82,3 +82,18 @@ variable "api_stage_name" {
 variable "aws_region" {
   description = "AWS region where the infrastructure is deployed."
 }
+
+# Variable for the URL of the Russian privacy policy.
+variable "privacy_policy_url_ru" {
+  description = "URL for the Russian privacy policy."
+}
+
+# Variable for the URL of the English privacy policy.
+variable "privacy_policy_url_en" {
+  description = "URL for the English privacy policy."
+}
+
+# Variable for the URL of the Kazakh privacy policy.
+variable "privacy_policy_url_kz" {
+  description = "URL for the Kazakh privacy policy."
+}
