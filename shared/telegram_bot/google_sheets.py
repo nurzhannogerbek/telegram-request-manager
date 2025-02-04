@@ -1,4 +1,5 @@
 import os
+import json
 import gspread
 import logging
 from google.oauth2.service_account import Credentials
@@ -98,3 +99,71 @@ class GoogleSheets:
                 raise ValueError(f"Missing required service account field: {key}.")
         # Log successful validation.
         print("Service account credentials validated successfully.")
+
+    def save_user_state(self, user_id: str, lang: str, current_question_index: int, responses: dict):
+        """
+        Saves the user's current state (language, question index, and responses) to the user_states sheet.
+
+        :param user_id: The unique Telegram user ID.
+        :param lang: The language code selected by the user (e.g., 'ru', 'kz', 'en').
+        :param current_question_index: The index of the current question in the form.
+        :param responses: A dictionary containing user responses collected so far.
+        """
+        try:
+            # Access the user_states worksheet in the Google Sheet.
+            user_states_sheet = self.client.open_by_key(os.getenv("GOOGLE_SHEET_ID")).worksheet("user_states")
+
+            # Convert responses to a JSON string to store in the sheet.
+            responses_json = json.dumps(responses)
+
+            # Prepare the row to store user state (converting each element to a string).
+            new_row = [str(user_id), lang, str(current_question_index), responses_json]
+
+            # Retrieve existing records safely.
+            records: list[dict] = user_states_sheet.get_all_records()
+
+            # Check if the user already exists in the records.
+            for i, record in enumerate(records):
+                if str(record.get('User ID', '')) == str(user_id):
+                    # Update the user's state in the corresponding row.
+                    user_states_sheet.update(f"A{i + 2}:D{i + 2}", [[str(x) for x in new_row]])  # type: ignore
+                    print(f"Updated state for user {user_id}.")
+                    return
+
+            # Append the new row if the user does not exist.
+            user_states_sheet.append_row([str(x) for x in new_row])
+            print(f"Saved new state for user {user_id}.")
+
+        except Exception as e:
+            print(f"Error saving user state for {user_id}: {e}")
+
+    def get_user_state(self, user_id):
+        """
+        Retrieves the saved state (language, question index, and responses) for a given user.
+
+        :param user_id: The unique Telegram user ID.
+        :return: A tuple containing (lang, current_question_index, responses).
+                 Returns (None, 0, {}) if no state is found.
+        """
+        try:
+            # Access the user_states worksheet in the Google Sheet.
+            user_states_sheet = self.client.open_by_key(os.getenv("GOOGLE_SHEET_ID")).worksheet("user_states")
+
+            # Retrieve all current rows from the sheet.
+            records = user_states_sheet.get_all_records()
+
+            # Search for the user ID in the rows.
+            for record in records:
+                if str(record['User ID']) == str(user_id):
+                    # Extract and return the saved state.
+                    lang = record['Language']
+                    current_question_index = int(record['Current Question Index'])
+                    responses = json.loads(record['Responses']) if record['Responses'] else {}
+                    return lang, current_question_index, responses
+
+        except Exception as e:
+            # Log any errors encountered during the operation.
+            print(f"Error retrieving user state for {user_id}: {e}")
+
+        # Return default state if the user is not found.
+        return None, 0, {}
