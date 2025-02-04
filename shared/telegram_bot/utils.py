@@ -64,24 +64,24 @@ class Utils:
     @staticmethod
     def fetch_privacy_policy(lang):
         """
-        Fetches the privacy policy text for the specified language from environment variables.
+        Fetches the privacy policy URL for the specified language from environment variables.
 
         :param lang: Language code (e.g., 'ru', 'kz', 'en').
-        :return: Text of the privacy policy or a fallback message if unavailable.
+        :return: Formatted URL text of the privacy policy or a fallback message if unavailable.
         """
-        # Map language codes to environment variables.
-        policies = {
-            "ru": os.getenv("PRIVACY_POLICY_RU"),
-            "kz": os.getenv("PRIVACY_POLICY_KZ"),
-            "en": os.getenv("PRIVACY_POLICY_EN")
+        # Map language codes to corresponding environment variables containing URLs.
+        policy_urls = {
+            "ru": os.getenv("PRIVACY_POLICY_URL_RU"),
+            "kz": os.getenv("PRIVACY_POLICY_URL_KZ"),
+            "en": os.getenv("PRIVACY_POLICY_URL_EN")
         }
 
-        # Get the policy text based on the language, default to English if not set.
-        policy_text = policies.get(lang, policies["en"])
+        # Retrieve the URL based on the selected language, default to English if not set.
+        policy_url = policy_urls.get(lang, policy_urls["en"])
 
-        # Return a fallback message if the policy text is not found.
-        if not policy_text:
+        # If no valid URL is found, return a fallback message.
+        if not policy_url:
             return "Privacy policy is currently unavailable. Please try again later."
 
-        # Return the policy text.
-        return policy_text
+        # Return the URL formatted as clickable text in Markdown.
+        return f"🔗 [Click here to view the Privacy Policy]({policy_url})"

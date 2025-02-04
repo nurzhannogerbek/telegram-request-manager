@@ -74,36 +74,53 @@ class BotHandlers:
 
     async def send_privacy_policy(self, update, context):
         """
-        Sends the privacy policy to the user and asks for their consent.
+        Sends the privacy policy text to the user and asks for their consent using inline buttons.
+
+        :param update: The Telegram update object, containing details of the incoming message or query.
+        :param context: The context object, providing access to user-specific data and bot configuration.
         """
         try:
+            # Extract the user ID from either callback query or message, depending on how the function was triggered.
             user_id = update.callback_query.from_user.id if update.callback_query else update.message.from_user.id
-            lang = context.user_data.get("lang", "en")  # Default to English if language is not set.
 
-            logger.info(f"Sending privacy policy to user {user_id} in language {lang}.")  # Log the action.
+            # Retrieve the user's preferred language from the context. Defaults to 'en' if not set.
+            lang = context.user_data.get("lang", "en")
 
-            # Retrieve the privacy policy text
-            privacy_policy_text = context.bot_data.get(f"privacy_policy_{lang}", "Privacy policy is currently unavailable.")
+            logger.info(f"Sending privacy policy to user {user_id} in language '{lang}'.")  # Log the action.
 
-            # Shorten the text for the initial display and provide a "Show more" button
-            short_text = f"{privacy_policy_text[:300]}...\n\n"
-            show_more_button = InlineKeyboardButton(self.localization.get_string(lang, "show_more"), callback_data=f"show_more_{lang}")
+            # Retrieve the localized privacy policy text directly from the environment variable using Utils.
+            privacy_policy_text = self.utils.fetch_privacy_policy(lang)
 
-            # Build the inline keyboard for user response.
+            # Retrieve button and prompt texts for the chosen language.
+            accept_button = self.localization.get_string(lang, "privacy_accept")
+            decline_button = self.localization.get_string(lang, "privacy_decline")
+            prompt_text = self.localization.get_string(lang, "privacy_prompt")
+
+            # Build the inline keyboard with buttons for user responses.
             keyboard = [
-                [InlineKeyboardButton(self.localization.get_string(lang, "privacy_accept"), callback_data="privacy_accept")],
-                [InlineKeyboardButton(self.localization.get_string(lang, "privacy_decline"), callback_data="privacy_decline")],
-                [show_more_button]
+                [
+                    InlineKeyboardButton(accept_button, callback_data="privacy_accept"),
+                    InlineKeyboardButton(decline_button, callback_data="privacy_decline")
+                ]
             ]
 
-            # Send the privacy policy with response buttons.
-            await context.bot.send_message(
-                chat_id=user_id,
-                text=short_text,
-                reply_markup=InlineKeyboardMarkup(keyboard)
-            )
+            # Construct the message content by combining the prompt and privacy policy.
+            message_text = f"{prompt_text}\n\n{privacy_policy_text}"
+
+            # Send or edit the message, depending on whether it is a callback query or a new message.
+            if update.callback_query:
+                await update.callback_query.edit_message_text(
+                    text=message_text,
+                    reply_markup=InlineKeyboardMarkup(keyboard)
+                )
+            else:
+                await update.message.reply_text(
+                    text=message_text,
+                    reply_markup=InlineKeyboardMarkup(keyboard)
+                )
 
         except Exception as e:
+            # Log any error encountered during the process.
             logger.error(f"Error in send_privacy_policy handler: {e}")
 
     async def handle_privacy_response(self, update, context):

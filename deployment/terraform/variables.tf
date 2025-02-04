@@ -83,17 +83,17 @@ variable "aws_region" {
   description = "AWS region where the infrastructure is deployed."
 }
 
-# Variable for the text of the Russian privacy policy.
-variable "privacy_policy_ru" {
-  description = "Text for the Russian privacy policy."
+# Variable for the URL of the Russian privacy policy.
+variable "privacy_policy_url_ru" {
+  description = "URL for the Russian privacy policy."
 }
 
-# Variable for the text of the English privacy policy.
-variable "privacy_policy_en" {
-  description = "Text for the English privacy policy."
+# Variable for the URL of the English privacy policy.
+variable "privacy_policy_url_en" {
+  description = "URL for the English privacy policy."
 }
 
-# Variable for the text of the Kazakh privacy policy.
-variable "privacy_policy_kz" {
-  description = "Text for the Kazakh privacy policy."
+# Variable for the URL of the Kazakh privacy policy.
+variable "privacy_policy_url_kz" {
+  description = "URL for the Kazakh privacy policy."
 }
