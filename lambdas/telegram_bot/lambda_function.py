@@ -1,7 +1,7 @@
 import os
 import json
+import asyncio
 from shared.telegram_bot.main import TelegramBot
-
 
 def lambda_handler(event, context):
     """
@@ -22,7 +22,9 @@ def lambda_handler(event, context):
     try:
         # Parse the incoming event as a Telegram update.
         update = json.loads(event["body"])
-        bot.process_update(update)
+
+        # Use asyncio event loop to run the async function.
+        asyncio.run(bot.process_update(update))
 
         # Return HTTP 200 (success response) to Telegram.
         return {
