@@ -59,6 +59,7 @@ jobs:
             -backend-config="encrypt=true"
 
           terraform apply \
+            -var-file=environments/test/terraform.tfvars \
             -var="telegram_bot_token=${{ secrets.TEST_TELEGRAM_BOT_TOKEN }}" \
             -var="admin_chat_id=${{ secrets.TEST_ADMIN_CHAT_ID }}" \
             -var="google_sheet_id=${{ secrets.TEST_GOOGLE_SHEET_ID }}" \
@@ -124,6 +125,7 @@ jobs:
             -backend-config="encrypt=true"
 
           terraform apply \
+            -var-file=environments/prod/terraform.tfvars \
             -var="telegram_bot_token=${{ secrets.PROD_TELEGRAM_BOT_TOKEN }}" \
             -var="admin_chat_id=${{ secrets.PROD_ADMIN_CHAT_ID }}" \
             -var="google_sheet_id=${{ secrets.PROD_GOOGLE_SHEET_ID }}" \
