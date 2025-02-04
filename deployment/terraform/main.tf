@@ -1,20 +1,19 @@
-# Define the AWS provider and dynamically set the region based on a variable.
+# Define the AWS provider and the region to deploy the resources.
 provider "aws" {
-  region = var.aws_region
+  region = var.aws_region # The region is dynamically set using a variable.
 }
 
-# IAM Role for the Lambda function, granting it necessary permissions to execute.
+# IAM Role for the Lambda function to execute with necessary permissions.
 resource "aws_iam_role" "lambda_role" {
-  name = "${var.project_name}_${var.environment}_aws-iam-role_telegram-bot"
+  name = "${var.project_name}_${var.environment}_aws-iam-role_telegram-bot" # Unique role name.
 
-  # Define the trust relationship for the Lambda service to assume the role.
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
         Effect = "Allow"
         Principal = {
-          Service = "lambda.amazonaws.com" # Grant Lambda permission to assume this role.
+          Service = "lambda.amazonaws.com" # Allow the AWS Lambda service to assume this role.
         }
         Action = "sts:AssumeRole"
       }
@@ -22,22 +21,22 @@ resource "aws_iam_role" "lambda_role" {
   })
 }
 
-# Attach the basic Lambda execution policy to the IAM role.
+# Attach the AWS-managed policy for basic Lambda execution permissions.
 resource "aws_iam_role_policy_attachment" "lambda_policy_attachment" {
-  role       = aws_iam_role.lambda_role.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+  role       = aws_iam_role.lambda_role.name # Attach the policy to the IAM role defined above.
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole" # AWS-managed policy for Lambda.
 }
 
-# Define the Lambda function with its settings, environment variables, and permissions.
+# Define the Lambda function itself.
 resource "aws_lambda_function" "telegram_bot" {
-  function_name = "${var.project_name}_${var.environment}_aws-lambda-function_telegram-bot"
-  role          = aws_iam_role.lambda_role.arn
-  handler       = "lambda_function.lambda_handler"
-  runtime       = "python3.13" # Specify the Python runtime for the function.
-  filename      = "${path.module}/telegram_bot.zip" # The deployment package containing the Lambda function code.
+  function_name = "${var.project_name}_${var.environment}_aws-lambda-function_telegram-bot" # Unique function name.
+  role          = aws_iam_role.lambda_role.arn # IAM role to be assumed by the function.
+  handler       = "lambda_function.lambda_handler" # Entry point for the Lambda function.
+  runtime       = "python3.13" # Python runtime version for the function.
+  filename      = "${path.module}/telegram_bot.zip" # Path to the zip file containing the Lambda code.
   timeout       = 10 # The maximum time the function is allowed to run before timing out.
 
-  # Define environment variables for the Lambda function.
+  # Set environment variables for the function.
   environment {
     variables = {
       TELEGRAM_BOT_TOKEN                        = var.telegram_bot_token
@@ -56,80 +55,74 @@ resource "aws_lambda_function" "telegram_bot" {
     }
   }
 
-  # Use the hash of the deployment package to detect changes and trigger updates.
+  # Use the hash of the zip file to detect changes and trigger updates.
   source_code_hash = filebase64sha256("${path.module}/telegram_bot.zip")
 }
 
 # Create an API Gateway to expose the Lambda function as an HTTP endpoint.
 resource "aws_api_gateway_rest_api" "telegram_bot_api" {
-  name = "${var.project_name}_${var.environment}_aws-api-gateway-rest-api_telegram-bot"
+  name = "${var.project_name}_${var.environment}_aws-api-gateway-rest-api_telegram-bot" # API Gateway name.
 }
 
-# Define a new resource under the API Gateway at the /telegram-bot path.
+# Define the /telegram-bot resource in the API Gateway.
 resource "aws_api_gateway_resource" "telegram_bot_resource" {
-  rest_api_id = aws_api_gateway_rest_api.telegram_bot_api.id
-  parent_id   = aws_api_gateway_rest_api.telegram_bot_api.root_resource_id
-  path_part   = "telegram-bot"
+  rest_api_id = aws_api_gateway_rest_api.telegram_bot_api.id # API Gateway ID.
+  parent_id   = aws_api_gateway_rest_api.telegram_bot_api.root_resource_id # Parent resource (root).
+  path_part   = "telegram-bot" # Path segment for the resource.
 }
 
 # Create a POST method for the /telegram-bot resource.
 resource "aws_api_gateway_method" "telegram_bot_post_method" {
-  rest_api_id   = aws_api_gateway_rest_api.telegram_bot_api.id
-  resource_id   = aws_api_gateway_resource.telegram_bot_resource.id
-  http_method   = "POST"
-  authorization = "NONE" # No authorization is required for this example.
+  rest_api_id   = aws_api_gateway_rest_api.telegram_bot_api.id # API Gateway ID.
+  resource_id   = aws_api_gateway_resource.telegram_bot_resource.id # Resource ID.
+  http_method   = "POST" # HTTP method for the endpoint.
+  authorization = "NONE" # No authorization required.
 }
 
-# Integrate the POST method with the Lambda function.
+# Link the POST method to the Lambda function.
 resource "aws_api_gateway_integration" "telegram_bot_post_integration" {
   rest_api_id = aws_api_gateway_rest_api.telegram_bot_api.id
   resource_id = aws_api_gateway_resource.telegram_bot_resource.id
   http_method = aws_api_gateway_method.telegram_bot_post_method.http_method
-  type        = "AWS_PROXY" # Use AWS Proxy integration to invoke the Lambda function directly.
+  type        = "AWS_PROXY" # Use AWS Proxy to directly invoke the Lambda function.
   integration_http_method = "POST"
   uri         = aws_lambda_function.telegram_bot.invoke_arn
 }
 
-# Deploy the API Gateway to make the /telegram-bot endpoint available.
+# Deploy the API Gateway.
 resource "aws_api_gateway_deployment" "telegram_bot_deployment" {
   rest_api_id = aws_api_gateway_rest_api.telegram_bot_api.id
-  depends_on  = [aws_api_gateway_integration.telegram_bot_post_integration] # Ensure the integration is complete before deployment.
+  depends_on  = [aws_api_gateway_integration.telegram_bot_post_integration] # Ensure integration is complete first.
 }
 
-# Define the API Gateway stage for the deployment (e.g., test or prod).
+# Define the API Gateway stage (e.g., test, prod).
 resource "aws_api_gateway_stage" "telegram_bot_stage" {
   deployment_id = aws_api_gateway_deployment.telegram_bot_deployment.id
   rest_api_id   = aws_api_gateway_rest_api.telegram_bot_api.id
-  stage_name    = var.api_stage_name
+  stage_name    = var.api_stage_name # Use the environment name as the stage name.
 }
 
-# Grant API Gateway permission to invoke the Lambda function.
+# Grant the API Gateway permission to invoke the Lambda function.
 resource "aws_lambda_permission" "allow_api_gateway" {
-  statement_id  = "AllowExecutionFromAPIGateway"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.telegram_bot.arn
-  principal     = "apigateway.amazonaws.com"
-  source_arn    = "${aws_api_gateway_rest_api.telegram_bot_api.execution_arn}/*/*"
+  statement_id  = "AllowExecutionFromAPIGateway" # Unique statement ID.
+  action        = "lambda:InvokeFunction" # Allow the invoke function action.
+  function_name = aws_lambda_function.telegram_bot.arn # Lambda function ARN.
+  principal     = "apigateway.amazonaws.com" # Principal service that is allowed to invoke.
+  source_arn    = "${aws_api_gateway_rest_api.telegram_bot_api.execution_arn}/*/*" # ARN of the API Gateway.
 }
 
-# Output the API Gateway URL to access the Lambda function.
+# Output the API Gateway URL.
 output "api_gateway_url" {
-  value       = aws_api_gateway_stage.telegram_bot_stage.invoke_url
-  description = "The URL for the API Gateway endpoint."
+  value       = aws_api_gateway_stage.telegram_bot_stage.invoke_url # Full URL of the deployed API Gateway.
+  description = "The URL for the API Gateway endpoint." # Description of the output value.
 }
 
-# Output the service account private key for debugging purposes.
-output "debug_service_account_private_key" {
-  value       = var.service_account_private_key
-  description = "Debug output for the service_account_private_key variable."
-}
-
-# Configure the backend to store the Terraform state file in an S3 bucket.
+# Configure the Terraform backend to store the state file in an S3 bucket.
 terraform {
   backend "s3" {
-    bucket         = "${var.project_name}-${var.environment}-terraform-state"
-    key            = "${var.environment}/terraform.tfstate"
-    region         = var.aws_region
-    encrypt        = true # Ensure that the state file is encrypted.
+    bucket         = "${var.project_name}-${var.environment}-terraform-state" # S3 bucket for state files.
+    key            = "${var.environment}/terraform.tfstate" # Path to the state file in the bucket.
+    region         = var.aws_region # AWS region where the bucket is located.
+    encrypt        = true # Enable encryption for the state file.
   }
 }
