@@ -100,9 +100,13 @@ class BotHandlers:
             decline_button = self.localization.get_string(lang, "privacy_decline")
             prompt_text = self.localization.get_string(lang, "privacy_prompt")
 
-            # Escape special characters for MarkdownV2
-            escaped_url = re.sub(r'([_.!~*\'()\[\]])', r'\\\1', privacy_policy_url)
-            escaped_link_text = re.sub(r'([_.!~*\'()\[\]])', r'\\\1', policy_link_text)
+            # Function to escape special characters for MarkdownV2
+            def escape_markdown_v2(text):
+                return re.sub(r'([_*\[\]()~`>#+\-=|{}.!])', r'\\\1', text)
+
+            # Escape the URL and link text for MarkdownV2
+            escaped_url = escape_markdown_v2(privacy_policy_url)
+            escaped_link_text = escape_markdown_v2(policy_link_text)
 
             # Construct the message content with a properly escaped clickable link to the policy.
             message_text = f"{prompt_text}\n\n[{escaped_link_text}]({escaped_url})"
