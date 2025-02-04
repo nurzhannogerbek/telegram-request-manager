@@ -80,7 +80,7 @@ class BotHandlers:
         :param context: The context object, providing access to user-specific data and bot configuration.
         """
         try:
-            # Extract the user ID from either a callback query or message, depending on how the function was triggered.
+            # Extract the user ID from either a callback query or message.
             user_id = update.callback_query.from_user.id if update.callback_query else update.message.from_user.id
 
             # Retrieve the user's preferred language from the context. Defaults to English ('en') if not set.
@@ -88,7 +88,7 @@ class BotHandlers:
 
             logger.info(f"Sending privacy policy to user {user_id} in language '{lang}'.")
 
-            # Retrieve the URL of the privacy policy from environment variables using the utility method.
+            # Retrieve the localized privacy policy URL and link text.
             privacy_policy_url = self.utils.fetch_privacy_policy(lang)
 
             # Retrieve the localized text for the policy link.
@@ -99,8 +99,8 @@ class BotHandlers:
             decline_button = self.localization.get_string(lang, "privacy_decline")
             prompt_text = self.localization.get_string(lang, "privacy_prompt")
 
-            # Construct the message content by combining the prompt and the clickable link to the policy.
-            message_text = f"{prompt_text}\n\n{policy_link_text}: {privacy_policy_url}"
+            # Construct the message content with the localized link text and URL.
+            message_text = f"{prompt_text}\n\n[{policy_link_text}]({privacy_policy_url})"
 
             # Build the inline keyboard with buttons for user responses.
             keyboard = [
@@ -110,18 +110,20 @@ class BotHandlers:
                 ]
             ]
 
-            # Check how the function was triggered and send or edit the appropriate message.
+            # Send or edit the message, depending on how the function was triggered.
             if update.callback_query:
                 # Edit the existing message when triggered by a callback query.
                 await update.callback_query.edit_message_text(
                     text=message_text,
-                    reply_markup=InlineKeyboardMarkup(keyboard)
+                    reply_markup=InlineKeyboardMarkup(keyboard),
+                    parse_mode="Markdown"  # Ensures that the link is formatted correctly.
                 )
             else:
                 # Send a new message when triggered by a regular message.
                 await update.message.reply_text(
                     text=message_text,
-                    reply_markup=InlineKeyboardMarkup(keyboard)
+                    reply_markup=InlineKeyboardMarkup(keyboard),
+                    parse_mode="Markdown"
                 )
 
         except Exception as e:
