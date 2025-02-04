@@ -51,25 +51,27 @@ class BotHandlers:
 
     async def set_language(self, update, context):
         """
-        Handles the language selection and stores the selected language in the user state.
-
-        :param update: The Telegram update object containing the callback query.
-        :param context: The context object to store user-specific data.
+        Handles the language selection and stores it in the context.
+        Sends the privacy policy in the selected language and saves the user state.
         """
-        query = update.callback_query
-        await query.answer()
+        query = update.callback_query  # Get callback query.
+        await query.answer()  # Acknowledge the query.
 
         try:
-            user_id = query.from_user.id
-            lang = query.data.split("_")[1]  # Extract selected language code.
+            user_id = query.from_user.id  # Get user ID.
+            lang = query.data.split("_")[1]  # Extract the selected language code.
 
             print(f"User {user_id} selected language: {lang}.")
-            context.user_data["lang"] = lang
+            context.user_data["lang"] = lang  # Store language in context.
 
-            # Save the user's language selection to Google Sheets.
-            self.google_sheets.save_user_state(user_id, lang)
+            # Initialize the form state with default values (no responses and question index 0).
+            initial_question_index = 0
+            initial_responses = {}
 
-            # Send the privacy policy in the selected language.
+            # Save the user's state immediately.
+            self.google_sheets.save_user_state(user_id, lang, initial_question_index, initial_responses)
+
+            # Send the privacy policy using the chosen language.
             await self.send_privacy_policy(update, context)
         except Exception as e:
             print(f"Error in set_language handler: {e}")
