@@ -58,8 +58,7 @@ jobs:
             -backend-config="region=${{ secrets.AWS_DEFAULT_REGION }}" \
             -backend-config="encrypt=true"
 
-          # Run terraform plan to debug any issues before applying.
-          terraform plan \
+          terraform apply \
             -var="telegram_bot_token=${{ secrets.TEST_TELEGRAM_BOT_TOKEN }}" \
             -var="admin_chat_id=${{ secrets.TEST_ADMIN_CHAT_ID }}" \
             -var="google_sheet_id=${{ secrets.TEST_GOOGLE_SHEET_ID }}" \
@@ -74,10 +73,6 @@ jobs:
             -var="service_account_auth_provider_cert_url=${{ secrets.TEST_SERVICE_ACCOUNT_AUTH_PROVIDER_CERT_URL }}" \
             -var="service_account_client_cert_url=${{ secrets.TEST_SERVICE_ACCOUNT_CLIENT_CERT_URL }}" \
             -var="aws_region=${{ secrets.AWS_DEFAULT_REGION }}" \
-            -out=tfplan
-
-          # Apply the plan to avoid running into dependency-related issues.
-          terraform apply tfplan \
             -auto-approve
 
   # Deploy to Production Environment (disabled by default for manual activation).
@@ -113,7 +108,7 @@ jobs:
         run: |
           echo "Service Account Private Key (first 10 chars): $(echo '${{ secrets.PROD_SERVICE_ACCOUNT_PRIVATE_KEY }}' | head -c 10) ..."
 
-            # Step 5: Initialize and apply the Terraform configuration for the production environment.
+      # Step 5: Initialize and apply the Terraform configuration for the production environment.
       - name: Terraform Init and Apply (Prod)
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.PROD_TELEGRAM_BOT_TOKEN }} # Production environment-specific token for the bot.
@@ -128,8 +123,7 @@ jobs:
             -backend-config="region=${{ secrets.AWS_DEFAULT_REGION }}" \
             -backend-config="encrypt=true"
 
-          # Run terraform plan to debug any issues before applying.
-          terraform plan \
+          terraform apply \
             -var="telegram_bot_token=${{ secrets.PROD_TELEGRAM_BOT_TOKEN }}" \
             -var="admin_chat_id=${{ secrets.PROD_ADMIN_CHAT_ID }}" \
             -var="google_sheet_id=${{ secrets.PROD_GOOGLE_SHEET_ID }}" \
@@ -144,8 +138,4 @@ jobs:
             -var="service_account_auth_provider_cert_url=${{ secrets.PROD_SERVICE_ACCOUNT_AUTH_PROVIDER_CERT_URL }}" \
             -var="service_account_client_cert_url=${{ secrets.PROD_SERVICE_ACCOUNT_CLIENT_CERT_URL }}" \
             -var="aws_region=${{ secrets.AWS_DEFAULT_REGION }}" \
-            -out=tfplan
-
-          # Apply the plan to avoid running into dependency-related issues.
-          terraform apply tfplan \
             -auto-approve
