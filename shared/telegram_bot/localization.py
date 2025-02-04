@@ -23,7 +23,8 @@ class Localization:
                 "error_message": "Произошла ошибка. Пожалуйста, попробуйте позже.",
                 "privacy_policy_request": "Ознакомьтесь с нашей политикой конфиденциальности.",
                 "form_reminder": "Напоминаем, что вы не закончили заполнение анкеты. Пожалуйста, завершите её, чтобы получить доступ к группе.",
-                "show_more": "Показать полностью"
+                "show_more": "Показать полностью",
+                "privacy_policy_link_text": "Нажмите здесь, чтобы ознакомиться с политикой конфиденциальности.",
             },
             "kz": {
                 "privacy_accept": "Қабылдаймын",
@@ -37,7 +38,8 @@ class Localization:
                 "error_message": "Қате орын алды. Кейінірек қайталап көріңіз.",
                 "privacy_policy_request": "Құпиялылық саясатымен танысыңыз.",
                 "form_reminder": "Сіз анкетаны толтырып бітірген жоқсыз. Топқа кіру үшін анкетаны аяқтаңыз.",
-                "show_more": "Толығырақ көрсету"
+                "show_more": "Толығырақ көрсету",
+                "privacy_policy_link_text": "Құпиялылық саясатына сілтемені қарау үшін мұнда басыңыз.",
             },
             "en": {
                 "privacy_accept": "Agree",
@@ -51,7 +53,8 @@ class Localization:
                 "error_message": "An error occurred. Please try again later.",
                 "privacy_policy_request": "Please review our privacy policy.",
                 "form_reminder": "Reminder: You have not completed the form. Please finish it to gain access to the group.",
-                "show_more": "Show more"
+                "show_more": "Show more",
+                "privacy_policy_link_text": "Click here to view the Privacy Policy.",
             }
         }
 

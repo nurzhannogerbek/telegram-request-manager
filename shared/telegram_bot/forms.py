@@ -11,9 +11,9 @@ class ApplicationForm:
         :param localization: Localization instance to fetch questions for the form.
         """
         self.lang = lang  # Stores the user's preferred language.
-        self.questions = localization.get_questions(lang)  # Retrieves localized questions.
+        self.questions = localization.get_questions(lang)  # Retrieves localized questions for the selected language.
         self.responses = {}  # Dictionary to store user responses.
-        self.current_question = 0  # Tracks the index of the current question.
+        self.current_question_index = 0  # Tracks the index of the current question.
 
     def get_next_question(self):
         """
@@ -21,20 +21,22 @@ class ApplicationForm:
 
         :return: The next question as a string, or None if the form is complete.
         """
-        if self.current_question < len(self.questions):
-            # Returns the next question based on the current index.
-            return self.questions[self.current_question]
+        if self.current_question_index < len(self.questions):
+            # Retrieve the current question based on the index.
+            return self.questions[self.current_question_index]
         return None  # Indicates that all questions have been answered.
 
     def save_response(self, response):
         """
-        Saves the user's response to the current question.
+        Saves the user's response to the current question and moves to the next question.
 
         :param response: The user's answer to the current question as a string.
         """
-        # Maps the current question to the user's response.
-        self.responses[self.questions[self.current_question]] = response
-        self.current_question += 1  # Moves to the next question.
+        if self.current_question_index < len(self.questions):
+            # Map the current question to the user's response.
+            current_question = self.questions[self.current_question_index]
+            self.responses[current_question] = response.strip()  # Save response with whitespace removed.
+            self.current_question_index += 1  # Move to the next question.
 
     def is_complete(self):
         """
@@ -42,11 +44,10 @@ class ApplicationForm:
 
         :return: True if all questions have been answered, False otherwise.
         """
-        # Iterates through all questions to verify if each has a corresponding response.
-        for question in self.questions:
-            if question not in self.responses or not self.responses[question].strip():
-                return False  # Returns False if any question is unanswered or blank.
-        return True  # Returns True if all questions are answered.
+        # Check if all questions have corresponding non-empty responses.
+        return self.current_question_index >= len(self.questions) and all(
+            self.responses.get(question, "").strip() for question in self.questions
+        )
 
     def get_unanswered_questions(self):
         """
@@ -54,8 +55,16 @@ class ApplicationForm:
 
         :return: A list of unanswered questions as strings.
         """
-        unanswered = []
-        for question in self.questions:
-            if question not in self.responses or not self.responses[question].strip():
-                unanswered.append(question)
+        unanswered = [
+            question for question in self.questions
+            if question not in self.responses or not self.responses[question].strip()
+        ]
         return unanswered
+
+    def get_all_responses(self):
+        """
+        Returns a dictionary of all collected responses.
+
+        :return: A dictionary where keys are questions and values are user responses.
+        """
+        return self.responses
