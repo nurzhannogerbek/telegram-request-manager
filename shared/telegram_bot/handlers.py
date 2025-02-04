@@ -27,81 +27,77 @@ class BotHandlers:
 
     async def start(self, update, context):
         """
-        Handles the /start command to initialize language selection.
-        Sends a welcome message with inline buttons for the user to choose their preferred language.
+        Handles the /start command or a new join request by displaying language options.
+        Sends a multilingual welcome message with inline buttons for language selection.
         """
-        user_id = update.message.from_user.id  # Extracts the user ID from the update object.
-        logger.info(f"User {user_id} issued the /start command.")  # Log the start command.
+        user_id = update.effective_user.id  # Extract the user ID from the update object.
+        logger.info(f"User {user_id} triggered the language selection process.")  # Log the event.
 
-        # Display language options as inline buttons.
+        # Build the inline keyboard with language options.
         keyboard = [[
             InlineKeyboardButton("Русский", callback_data="lang_ru"),
             InlineKeyboardButton("Қазақша", callback_data="lang_kz"),
             InlineKeyboardButton("English", callback_data="lang_en")
         ]]
 
-        # Send the message to prompt language selection.
-        await update.message.reply_text(
-            self.localization.get_string("en", "welcome_message"),
+        # Send the multilingual welcome message with the language selection buttons.
+        await context.bot.send_message(
+            chat_id=user_id,
+            text=self.localization.get_multilang_welcome_message(),
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
 
     async def set_language(self, update, context):
         """
-        Sets the user's language based on their selection and sends the privacy policy.
+        Sets the user's language based on their selection and sends the privacy policy request.
         """
-        query = update.callback_query  # Extracts the callback query object.
+        query = update.callback_query  # Extract the callback query object.
         await query.answer()  # Acknowledge the callback query.
-        user_id = query.from_user.id  # Extracts the user ID.
-        lang = query.data.split("_")[1]  # Extracts the selected language code.
+        user_id = query.from_user.id  # Extract the user ID.
+        lang = query.data.split("_")[1]  # Extract the selected language code.
 
         logger.info(f"User {user_id} selected language: {lang}.")  # Log the language selection.
 
         # Store the selected language for the user in the context.
         context.user_data["lang"] = lang
 
-        # Proceed to send the privacy policy.
-        await self.send_privacy_policy(update, context)
+        # Proceed to send the privacy policy message.
+        await self.send_privacy_policy_request(update, context)
 
-    async def send_privacy_policy(self, update, context):
+    async def send_privacy_policy_request(self, update, context):
         """
-        Sends the privacy policy introduction to the user and asks for their consent.
+        Sends a message requesting the user to review and accept the privacy policy.
         """
-        user_id = update.callback_query.from_user.id if update.callback_query else update.message.from_user.id
+        user_id = update.effective_user.id  # Extract the user ID from the update object.
         lang = context.user_data.get("lang", "en")  # Default to English if language is not set.
 
-        logger.info(f"Sending privacy policy introduction to user {user_id} in language {lang}.")  # Log the action.
+        logger.info(f"Sending privacy policy request to user {user_id} in language {lang}.")  # Log the event.
 
-        # Retrieve the privacy policy intro and button texts.
-        intro_text = self.localization.get_string(lang, "privacy_policy_intro")
+        # Retrieve the privacy policy request message and button texts.
+        policy_request_text = self.localization.get_string(lang, "privacy_policy_request")
         accept_button = self.localization.get_string(lang, "privacy_accept")
         decline_button = self.localization.get_string(lang, "privacy_decline")
 
-        # Build the inline keyboard for user response.
+        # Build the inline keyboard with "Agree" and "Disagree" buttons.
         keyboard = [[
             InlineKeyboardButton(accept_button, callback_data="privacy_accept"),
             InlineKeyboardButton(decline_button, callback_data="privacy_decline")
         ]]
 
-        # Send the privacy policy intro with response buttons.
-        if update.callback_query:
-            await update.callback_query.edit_message_text(
-                text=intro_text,
-                reply_markup=InlineKeyboardMarkup(keyboard)
-            )
-        else:
-            await update.message.reply_text(
-                text=intro_text,
-                reply_markup=InlineKeyboardMarkup(keyboard)
-            )
+        # Send the privacy policy request message.
+        await context.bot.send_message(
+            chat_id=user_id,
+            text=policy_request_text,
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
 
     async def handle_privacy_response(self, update, context):
         """
         Handles the user's response to the privacy policy.
         """
-        query = update.callback_query  # Extracts the callback query object.
+        query = update.callback_query  # Extract the callback query object.
         await query.answer()  # Acknowledge the response.
-        user_id = query.from_user.id  # Extracts the user ID.
+        user_id = query.from_user.id  # Extract the user ID.
         lang = context.user_data.get("lang", "en")  # Default to English if not set.
 
         if query.data == "privacy_accept":
@@ -125,7 +121,7 @@ class BotHandlers:
         """
         Processes user responses and manages the application form flow.
         """
-        user_id = update.message.from_user.id  # Extracts the user ID.
+        user_id = update.message.from_user.id  # Extract the user ID.
         lang = context.user_data.get("lang", "en")  # Get the user's selected language.
         form = self.user_forms.get(user_id)  # Retrieve the active form for the user.
 
@@ -160,15 +156,14 @@ class BotHandlers:
 
     async def handle_join_request(self, update: Update, context):
         """
-        Handles new join requests and starts the onboarding process by sending a welcome message.
+        Handles new join requests and starts the onboarding process by displaying language options.
         """
-        join_request = update.chat_join_request  # Extracts the join request object.
-        user_id = join_request.from_user.id  # Extracts the user ID.
-        lang = "en"  # Default to English.
+        join_request = update.chat_join_request  # Extract the join request object.
+        user_id = join_request.from_user.id  # Extract the user ID.
 
         logger.info(f"Received join request from user {user_id}.")  # Log the join request.
 
-        # Send a welcome message to the user prompting language selection.
+        # Trigger the language selection process.
         await self.start(update, context)
 
     async def approve_join_request(self, user_id, context):
