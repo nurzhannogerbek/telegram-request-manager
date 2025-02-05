@@ -3,6 +3,7 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from shared.telegram_bot.forms import ApplicationForm
 from shared.telegram_bot.localization import Localization
 from shared.telegram_bot.google_sheets import GoogleSheets
+from shared.telegram_bot.validation import Validation
 from shared.telegram_bot.utils import Utils
 
 class BotHandlers:
@@ -172,6 +173,7 @@ class BotHandlers:
 
         Handles cases where the form is not found in memory and attempts to restore it from Google Sheets.
         If the form is complete, saves responses and approves the join request.
+        Validates user input for email and phone number questions.
         """
         try:
             # Retrieve the user's Telegram ID from the update object.
@@ -188,16 +190,35 @@ class BotHandlers:
                 # If a saved state exists, restore the form and continue.
                 if lang:
                     form = ApplicationForm(lang, self.localization)
-                    form.current_question_index = current_question_index  # Resume from the saved question.
-                    form.responses = responses  # Restore saved responses.
-                    self.user_forms[user_id] = form  # Save the form back to memory.
+                    form.current_question_index = current_question_index
+                    form.responses = responses
+                    self.user_forms[user_id] = form
                 else:
                     # If no saved state is found, notify the user of an error and return.
                     await update.message.reply_text(self.localization.get_string("en", "error_message"))
                     return
 
+            # Get the current question and its type.
+            current_question, question_type = form.get_next_question()
+            user_response = update.message.text.strip()
+
+            # Validate user response based on the type of question.
+            if question_type == "email":
+                if not Validation.validate_email(user_response):
+                    await update.message.reply_text(
+                        self.localization.get_string(form.lang, "invalid_email")
+                    )
+                    return  # Stop processing and wait for correct input.
+
+            if question_type == "phone":
+                if not Validation.validate_phone(user_response):
+                    await update.message.reply_text(
+                        self.localization.get_string(form.lang, "invalid_phone")
+                    )
+                    return  # Stop processing and wait for correct input.
+
             # Save the user's response to the current question.
-            form.save_response(update.message.text)
+            form.save_response(user_response)
 
             # Check if the form is complete (all questions answered).
             if form.is_complete():
@@ -214,9 +235,7 @@ class BotHandlers:
                 await self.approve_join_request(user_id, context)
             else:
                 # Get the next question based on the current question index.
-                next_question = form.get_next_question()
-
-                # Save the current form state (language, question index, responses) to Google Sheets.
+                next_question, _ = form.get_next_question()
                 self.google_sheets.save_user_state(user_id, form.lang, form.current_question_index, form.responses)
 
                 # Send the next question to the user.

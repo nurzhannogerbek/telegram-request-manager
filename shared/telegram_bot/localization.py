@@ -25,6 +25,8 @@ class Localization:
                 "form_reminder": "Напоминаем, что вы не закончили заполнение анкеты. Пожалуйста, завершите её, чтобы получить доступ к группе.",
                 "show_more": "Показать полностью",
                 "privacy_policy_link_text": "Нажмите здесь, чтобы ознакомиться с политикой конфиденциальности.",
+                "invalid_email": "Пожалуйста, введите корректный адрес электронной почты.",
+                "invalid_phone": "Пожалуйста, введите корректный номер телефона.",
             },
             "kz": {
                 "privacy_accept": "Қабылдаймын",
@@ -40,6 +42,8 @@ class Localization:
                 "form_reminder": "Сіз анкетаны толтырып бітірген жоқсыз. Топқа кіру үшін анкетаны аяқтаңыз.",
                 "show_more": "Толығырақ көрсету",
                 "privacy_policy_link_text": "Құпиялылық саясатына сілтемені қарау үшін мұнда басыңыз.",
+                "invalid_email": "Дұрыс электрондық пошта мекенжайын енгізіңіз.",
+                "invalid_phone": "Дұрыс телефон нөмірін енгізіңіз.",
             },
             "en": {
                 "privacy_accept": "Agree",
@@ -55,6 +59,8 @@ class Localization:
                 "form_reminder": "Reminder: You have not completed the form. Please finish it to gain access to the group.",
                 "show_more": "Show more",
                 "privacy_policy_link_text": "Click here to view the Privacy Policy.",
+                "invalid_email": "Please enter a valid email address.",
+                "invalid_phone": "Please enter a valid phone number.",
             }
         }
 
@@ -69,25 +75,25 @@ class Localization:
         # Dictionary containing questions for multiple languages.
         self.questions = {
             "ru": [
-                "Ваше полное имя?",
-                "Ваш возраст?",
-                "Ваш email?",
-                "Ваш номер телефона?",
-                "Цель вступления в группу?"
+                {"question": "Ваше полное имя?", "type": "text"},
+                {"question": "Ваш возраст?", "type": "text"},
+                {"question": "Ваш email?", "type": "email"},
+                {"question": "Ваш номер телефона?", "type": "phone"},
+                {"question": "Цель вступления в группу?", "type": "text"}
             ],
             "kz": [
-                "Сіздің толық атыңыз?",
-                "Сіздің жасыңыз?",
-                "Сіздің email?",
-                "Сіздің телефон нөміріңіз?",
-                "Топқа кіру мақсатыңыз қандай?"
+                {"question": "Сіздің толық атыңыз?", "type": "text"},
+                {"question": "Сіздің жасыңыз?", "type": "text"},
+                {"question": "Сіздің email?", "type": "email"},
+                {"question": "Сіздің телефон нөміріңіз?", "type": "phone"},
+                {"question": "Топқа кіру мақсатыңыз қандай?", "type": "text"}
             ],
             "en": [
-                "What is your full name?",
-                "How old are you?",
-                "What is your email?",
-                "What is your phone number?",
-                "What is your purpose for joining the group?"
+                {"question": "What is your full name?", "type": "text"},
+                {"question": "How old are you?", "type": "text"},
+                {"question": "What is your email?", "type": "email"},
+                {"question": "What is your phone number?", "type": "phone"},
+                {"question": "What is your purpose for joining the group?", "type": "text"}
             ]
         }
 
