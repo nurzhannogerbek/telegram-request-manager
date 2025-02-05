@@ -56,26 +56,29 @@ class GoogleSheets:
 
     def save_to_sheet(self, user_id, responses):
         """
-        Saves user responses to Google Sheets.
+        Saves user responses to the "Telegram Users" sheet.
 
         :param user_id: Telegram user ID as a string.
         :param responses: Dictionary of user responses with questions as keys and answers as values.
         """
         try:
-            # Prepare the row: user ID followed by all response values.
-            row = [str(user_id)] + list(responses.values())
-            # Log saving action.
-            print(f"Saving responses to Google Sheets for user {user_id}: {responses}.")
+            # Define the column order based on the sheet headers.
+            column_order = ["User ID", "Full Name", "Age", "Email", "Phone", "Purpose"]
 
-            # Append the row to the Google Sheet.
+            # Map responses to the correct column order.
+            row = [str(user_id)]  # The first column is always the user ID.
+
+            # Fill the row with answers based on the order of the columns.
+            for column in column_order[1:]:
+                # Match the question text with the response in the dictionary.
+                response = responses.get(column, "")  # Return an empty string if no response is found.
+                row.append(response)
+
+            # Append the row to the "Telegram Users" sheet.
             self.sheet.append_row(row)
-            # Log success.
-            print(f"Successfully saved responses for user {user_id}.")
 
         except Exception as e:
-            # Log any errors.
-            logger.error(f"Error saving to Google Sheets for user {user_id}: {e}.")
-            raise
+            print(f"Error saving to Google Sheets for user {user_id}: {e}.")
 
     @staticmethod
     def _validate_service_account_info(service_account_info):
@@ -111,7 +114,7 @@ class GoogleSheets:
         """
         try:
             # Access the user_states worksheet in the Google Sheet.
-            user_states_sheet = self.client.open_by_key(os.getenv("GOOGLE_SHEET_ID")).worksheet("user_states")
+            user_states_sheet = self.client.open_by_key(os.getenv("GOOGLE_SHEET_ID")).worksheet("Metadata")
 
             # Convert responses to a JSON string to store in the sheet.
             responses_json = json.dumps(responses)
@@ -147,7 +150,7 @@ class GoogleSheets:
         """
         try:
             # Access the user_states worksheet in the Google Sheet.
-            user_states_sheet = self.client.open_by_key(os.getenv("GOOGLE_SHEET_ID")).worksheet("user_states")
+            user_states_sheet = self.client.open_by_key(os.getenv("GOOGLE_SHEET_ID")).worksheet("Metadata")
 
             # Retrieve all current rows from the sheet.
             records = user_states_sheet.get_all_records()

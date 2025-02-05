@@ -43,7 +43,7 @@ class ApplicationForm:
         :param response: The user's answer to the current question as a string.
         """
         if self.current_question_index < len(self.questions):
-            # Extract the question text instead of using the entire dict.
+            # Use only the question text as the key for responses.
             current_question_text = self.questions[self.current_question_index]["question"]
 
             response = response.strip()
@@ -82,8 +82,31 @@ class ApplicationForm:
 
     def get_all_responses(self):
         """
-        Returns a dictionary of all collected responses.
+        Returns a dictionary of all collected responses, mapped by the question titles in the correct order.
 
-        :return: A dictionary where keys are questions and values are user responses.
+        :return: A dictionary where keys match the column headers in the Google Sheet.
         """
-        return self.responses
+        response_mapping = {
+            "Ваше полное имя?": "Full Name",
+            "Сіздің толық атыңыз?": "Full Name",
+            "What is your full name?": "Full Name",
+            "Ваш возраст?": "Age",
+            "Сіздің жасыңыз?": "Age",
+            "How old are you?": "Age",
+            "Ваш email?": "Email",
+            "Сіздің email?": "Email",
+            "What is your email?": "Email",
+            "Ваш номер телефона?": "Phone",
+            "Сіздің телефон нөміріңіз?": "Phone",
+            "What is your phone number?": "Phone",
+            "Цель вступления в группу?": "Purpose",
+            "Топқа кіру мақсатыңыз қандай?": "Purpose",
+            "What is your purpose for joining the group?": "Purpose"
+        }
+        mapped_responses = {}
+        for question, answer in self.responses.items():
+            mapped_key = response_mapping.get(question)
+            if mapped_key:
+                mapped_responses[mapped_key] = answer
+        return mapped_responses
+
