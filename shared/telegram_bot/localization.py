@@ -79,21 +79,21 @@ class Localization:
         self.questions = {
             "ru": [
                 {"question": "Ваше полное имя?", "type": "text"},
-                {"question": "Ваш возраст?", "type": "text"},
+                {"question": "Ваш возраст?", "type": "age"},
                 {"question": "Ваш email?", "type": "email"},
                 {"question": "Ваш номер телефона?", "type": "phone"},
                 {"question": "Цель вступления в группу?", "type": "text"}
             ],
             "kz": [
                 {"question": "Сіздің толық атыңыз?", "type": "text"},
-                {"question": "Сіздің жасыңыз?", "type": "text"},
+                {"question": "Сіздің жасыңыз?", "type": "age"},
                 {"question": "Сіздің email?", "type": "email"},
                 {"question": "Сіздің телефон нөміріңіз?", "type": "phone"},
                 {"question": "Топқа кіру мақсатыңыз қандай?", "type": "text"}
             ],
             "en": [
                 {"question": "What is your full name?", "type": "text"},
-                {"question": "How old are you?", "type": "text"},
+                {"question": "How old are you?", "type": "age"},
                 {"question": "What is your email?", "type": "email"},
                 {"question": "What is your phone number?", "type": "phone"},
                 {"question": "What is your purpose for joining the group?", "type": "text"}
