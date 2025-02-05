@@ -17,14 +17,24 @@ class ApplicationForm:
 
     def get_next_question(self):
         """
-        Returns the next question in the form along with its type.
+        Returns the next question as a string, or None if the form is complete.
 
-        :return: A tuple containing (question, question_type), or (None, None) if form is complete.
+        :return: The next question as a string.
         """
         if self.current_question_index < len(self.questions):
-            current_question = self.questions[self.current_question_index]
-            return current_question["question"], current_question["type"]
-        return None, None
+            # Return only the question text, not the type.
+            return self.questions[self.current_question_index]["question"]
+        return None
+
+    def get_current_question_type(self):
+        """
+        Returns the type of the current question.
+
+        :return: The type of the current question as a string, or None if form is complete.
+        """
+        if self.current_question_index < len(self.questions):
+            return self.questions[self.current_question_index]["type"]
+        return None
 
     def save_response(self, response):
         """

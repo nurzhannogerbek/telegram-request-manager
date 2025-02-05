@@ -190,27 +190,30 @@ class BotHandlers:
                 # If a saved state exists, restore the form and continue.
                 if lang:
                     form = ApplicationForm(lang, self.localization)
-                    form.current_question_index = current_question_index
-                    form.responses = responses
-                    self.user_forms[user_id] = form
+                    form.current_question_index = current_question_index  # Resume from saved question.
+                    form.responses = responses  # Restore saved responses.
+                    self.user_forms[user_id] = form  # Save the form back to memory.
                 else:
                     # If no saved state is found, notify the user of an error and return.
                     await update.message.reply_text(self.localization.get_string("en", "error_message"))
                     return
 
-            # Get the current question and its type.
-            current_question, question_type = form.get_next_question()
+            # Get the current question text and its type.
+            current_question_text = form.get_next_question()
+            current_question_type = form.get_current_question_type()
             user_response = update.message.text.strip()
 
             # Validate user response based on the type of question.
-            if question_type == "email":
+            if current_question_type == "email":
+                # Validate the email using a regex-based validator.
                 if not Validation.validate_email(user_response):
                     await update.message.reply_text(
                         self.localization.get_string(form.lang, "invalid_email")
                     )
                     return  # Stop processing and wait for correct input.
 
-            if question_type == "phone":
+            if current_question_type == "phone":
+                # Validate the phone number using a regex-based validator.
                 if not Validation.validate_phone(user_response):
                     await update.message.reply_text(
                         self.localization.get_string(form.lang, "invalid_phone")
@@ -234,12 +237,14 @@ class BotHandlers:
                 # Approve the user's join request automatically.
                 await self.approve_join_request(user_id, context)
             else:
-                # Get the next question based on the current question index.
-                next_question, _ = form.get_next_question()  # Ignore the question type here.
+                # Get the next question to be asked.
+                next_question_text = form.get_next_question()
+
+                # Save the current form state (language, question index, responses) to Google Sheets.
                 self.google_sheets.save_user_state(user_id, form.lang, form.current_question_index, form.responses)
 
                 # Send the next question to the user.
-                await update.message.reply_text(next_question)
+                await update.message.reply_text(next_question_text)
 
         except Exception as e:
             # Log any errors that occur during form processing for debugging purposes.
