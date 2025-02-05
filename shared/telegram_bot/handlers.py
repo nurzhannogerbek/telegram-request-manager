@@ -135,7 +135,7 @@ class BotHandlers:
             user_id = query.from_user.id
 
             # Retrieve user state to get language or use fallback.
-            lang, current_question_index, responses = self.google_sheets.get_user_state(user_id)
+            lang, current_question_index, responses, chat_id = self.google_sheets.get_user_state(user_id)
             if not lang:
                 lang = context.user_data.get("lang", "en")  # Fallback to default language if not found.
                 print(f"Warning: No saved state found for user {user_id}, defaulting to language '{lang}'.")
@@ -150,7 +150,7 @@ class BotHandlers:
                 self.user_forms[user_id] = form
 
                 # Save the initial state to Google Sheets.
-                self.google_sheets.save_user_state(user_id, lang, form.current_question_index, form.responses)
+                self.google_sheets.save_user_state(user_id, lang, form.current_question_index, form.responses, chat_id)
 
                 # Get the first question and send it to the user.
                 question = form.get_next_question()
@@ -175,15 +175,11 @@ class BotHandlers:
         Handles cases where form state is restored from Google Sheets.
         """
         try:
-            # Retrieve the user's Telegram ID from the update object.
             user_id = update.message.from_user.id
-
-            # Attempt to get the user's active form from the in-memory storage.
             form = self.user_forms.get(user_id)
 
-            # If the form is not found, try to restore the user's state from Google Sheets.
             if not form:
-                lang, current_question_index, responses = self.google_sheets.get_user_state(user_id)
+                lang, current_question_index, responses, chat_id = self.google_sheets.get_user_state(user_id)
                 if lang:
                     form = ApplicationForm(lang, self.localization)
                     form.current_question_index = current_question_index
@@ -193,36 +189,35 @@ class BotHandlers:
                     await update.message.reply_text(self.localization.get_string("en", "error_message"))
                     return
 
-            # Get the current question text and its type.
             user_response = update.message.text.strip()
+            current_question_type = form.get_current_question_type()
 
-            # Save the user's response to the current question.
+            # Validation based on question type
+            if current_question_type == "email" and not Validation.validate_email(user_response):
+                await update.message.reply_text(self.localization.get_string(form.lang, "invalid_email"))
+                return
+            if current_question_type == "phone" and not Validation.validate_phone(user_response):
+                await update.message.reply_text(self.localization.get_string(form.lang, "invalid_phone"))
+                return
+            if current_question_type == "age" and not Validation.validate_age(user_response):
+                await update.message.reply_text(self.localization.get_string(form.lang, "invalid_age"))
+                return
+
             form.save_response(user_response)
 
-            # Check if the form is complete (all questions answered).
             if form.is_complete():
-                # Save the final state of the form to Metadata before removing it.
-                self.google_sheets.save_user_state(user_id, form.lang, form.current_question_index, form.responses)
-
-                # Map the responses and save them to the "Telegram Users" sheet.
                 self.google_sheets.save_to_sheet(user_id, form.get_all_responses())
-
-                # Notify the user of successful completion.
                 await update.message.reply_text(self.localization.get_string(form.lang, "application_complete"))
-
-                # Remove the form from memory.
                 del self.user_forms[user_id]
-
-                # Automatically approve the user's join request.
                 await self.approve_join_request(user_id, context)
             else:
-                # Get the next question to ask.
                 next_question_text = form.get_next_question()
-
-                # Save the current form state to Metadata.
-                self.google_sheets.save_user_state(user_id, form.lang, form.current_question_index, form.responses)
-
-                # Send the next question.
+                self.google_sheets.save_user_state(
+                    user_id=str(user_id),
+                    lang=form.lang,
+                    current_question_index=form.current_question_index,
+                    responses=form.responses
+                )
                 await update.message.reply_text(next_question_text)
 
         except Exception as e:
