@@ -230,15 +230,22 @@ class BotHandlers:
 
     async def handle_join_request(self, update: Update, context):
         """
-        Handles a new join request by initiating the onboarding process.
-
-        :param update: The Telegram update object containing the join request details.
-        :param context: The context object storing user-specific data.
+        Handles a new join request by initiating the onboarding process and saving the chat_id.
         """
         try:
             join_request = update.chat_join_request
             user_id = join_request.from_user.id
-            print(f"Received join request from user {user_id}.")
+            chat_id = join_request.chat.id
+
+            print(f"Received join request from user {user_id} for chat {chat_id}.")
+
+            self.google_sheets.save_user_state(
+                user_id=str(user_id),
+                lang="",
+                current_question_index=0,
+                responses={},
+                chat_id=str(chat_id)
+            )
             await self.start(update, context)
         except Exception as e:
             print(f"Error in handle_join_request handler: {e}")
@@ -251,13 +258,13 @@ class BotHandlers:
         :param context: The context object storing user-specific data.
         """
         try:
-            chat_id = context.chat_data.get("chat_id")
+            _, _, _, chat_id = self.google_sheets.get_user_state(user_id)
             if not chat_id:
-                print(f"Error: Chat ID not found in context for user {user_id}.")
+                print(f"Error: Chat ID not found for user {user_id} in Metadata.")
                 return
 
-            print(f"Approving join request for user {user_id}.")
-            await context.bot.approve_chat_join_request(chat_id=chat_id, user_id=user_id)
+            print(f"Approving join request for user {user_id} in chat {chat_id}.")
+            await context.bot.approve_chat_join_request(chat_id=int(chat_id), user_id=user_id)
             await self.utils.notify_admin(f"✅ User {user_id} has been approved to join the group.")
         except Exception as e:
             print(f"Error in approve_join_request handler: {e}")

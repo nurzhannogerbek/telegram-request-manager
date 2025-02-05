@@ -103,33 +103,28 @@ class GoogleSheets:
         # Log successful validation.
         print("Service account credentials validated successfully.")
 
-    def save_user_state(self, user_id: str, lang: str, current_question_index: int, responses: dict):
+    def save_user_state(self, user_id: str, lang: str, current_question_index: int, responses: dict, chat_id: str = ""):
         """
-        Saves the user's current state (language, question index, and responses) to the user_states sheet.
-
-        :param user_id: The unique Telegram user ID.
-        :param lang: The language code selected by the user (e.g., 'ru', 'kz', 'en').
-        :param current_question_index: The index of the current question in the form.
-        :param responses: A dictionary containing user responses collected so far.
+        Saves the user's current state (language, question index, responses, and chat_id) to the Metadata sheet.
         """
         try:
-            # Access the user_states worksheet in the Google Sheet.
+            # Access the Metadata worksheet in the Google Sheet.
             user_states_sheet = self.client.open_by_key(os.getenv("GOOGLE_SHEET_ID")).worksheet("Metadata")
 
             # Convert responses to a JSON string to store in the sheet.
             responses_json = json.dumps(responses)
 
             # Prepare the row to store user state.
-            new_row = [str(user_id), lang, str(current_question_index), responses_json]
+            new_row = [str(user_id), lang or "", str(current_question_index), responses_json, str(chat_id or "")]
 
             # Retrieve existing records.
-            records: list[dict] = user_states_sheet.get_all_records()
+            records = user_states_sheet.get_all_records()
 
             # Check if the user already exists in the records.
             for i, record in enumerate(records):
                 if str(record.get('User ID', '')) == str(user_id):
                     # Update the user's state in the corresponding row.
-                    user_states_sheet.update(f"A{i + 2}:D{i + 2}", [[str(x) for x in new_row]])  # type: ignore
+                    user_states_sheet.update(f"A{i + 2}:E{i + 2}", [[str(x) for x in new_row]])  # type: ignore
                     print(f"Updated state for user {user_id}.")
                     return
 
@@ -142,14 +137,13 @@ class GoogleSheets:
 
     def get_user_state(self, user_id):
         """
-        Retrieves the saved state (language, question index, and responses) for a given user.
+        Retrieves the saved state (language, question index, responses, and chat_id) for a given user.
 
         :param user_id: The unique Telegram user ID.
-        :return: A tuple containing (lang, current_question_index, responses).
-                 Returns (None, 0, {}) if no state is found.
+        :return: A tuple containing (lang, current_question_index, responses, chat_id).
         """
         try:
-            # Access the user_states worksheet in the Google Sheet.
+            # Access the Metadata worksheet in the Google Sheet.
             user_states_sheet = self.client.open_by_key(os.getenv("GOOGLE_SHEET_ID")).worksheet("Metadata")
 
             # Retrieve all current rows from the sheet.
@@ -162,11 +156,11 @@ class GoogleSheets:
                     lang = record['Language']
                     current_question_index = int(record['Current Question Index'])
                     responses = json.loads(record['Responses']) if record['Responses'] else {}
-                    return lang, current_question_index, responses
+                    chat_id = record.get('Chat ID', None)
+                    return lang, current_question_index, responses, chat_id
 
         except Exception as e:
-            # Log any errors encountered during the operation.
             print(f"Error retrieving user state for {user_id}: {e}")
 
         # Return default state if the user is not found.
-        return None, 0, {}
+        return None, 0, {}, None
