@@ -27,6 +27,7 @@ class Localization:
                 "privacy_policy_link_text": "Нажмите здесь, чтобы ознакомиться с политикой конфиденциальности.",
                 "invalid_email": "Пожалуйста, введите корректный адрес электронной почты.",
                 "invalid_phone": "Пожалуйста, введите корректный номер телефона.",
+                "invalid_age": "Пожалуйста, введите корректный возраст (от 1 до 120)."
             },
             "kz": {
                 "privacy_accept": "Қабылдаймын",
@@ -44,6 +45,7 @@ class Localization:
                 "privacy_policy_link_text": "Құпиялылық саясатына сілтемені қарау үшін мұнда басыңыз.",
                 "invalid_email": "Дұрыс электрондық пошта мекенжайын енгізіңіз.",
                 "invalid_phone": "Дұрыс телефон нөмірін енгізіңіз.",
+                "invalid_age": "Дұрыс жасты енгізіңіз (1-ден 120-ға дейін)."
             },
             "en": {
                 "privacy_accept": "Agree",
@@ -61,6 +63,7 @@ class Localization:
                 "privacy_policy_link_text": "Click here to view the Privacy Policy.",
                 "invalid_email": "Please enter a valid email address.",
                 "invalid_phone": "Please enter a valid phone number.",
+                "invalid_age": "Please enter a valid age (between 1 and 120)."
             }
         }
 

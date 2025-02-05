@@ -171,9 +171,7 @@ class BotHandlers:
         """
         Processes user responses and progresses through the application form.
 
-        Handles cases where the form is not found in memory and attempts to restore it from Google Sheets.
-        If the form is complete, saves responses and approves the join request.
-        Validates user input for email and phone number questions.
+        Validates user input for email, phone number, and age questions and sends next questions.
         """
         try:
             # Retrieve the user's Telegram ID from the update object.
@@ -182,7 +180,6 @@ class BotHandlers:
             # Attempt to get the user's active form from the in-memory storage.
             form = self.user_forms.get(user_id)
 
-            # If the form is not found, try to restore the user's state from Google Sheets.
             if not form:
                 lang, current_question_index, responses = self.google_sheets.get_user_state(user_id)
                 if lang:
@@ -199,20 +196,29 @@ class BotHandlers:
             current_question_type = form.get_current_question_type()
             user_response = update.message.text.strip()
 
-            # Validate user response based on the type of question.
+            # Validate email input.
             if current_question_type == "email":
                 if not Validation.validate_email(user_response):
                     await update.message.reply_text(
                         self.localization.get_string(form.lang, "invalid_email")
                     )
-                    return  # Stop processing and wait for correct input.
+                    return  # Stop processing and wait for a valid email.
 
+            # Validate phone input.
             if current_question_type == "phone":
                 if not Validation.validate_phone(user_response):
                     await update.message.reply_text(
                         self.localization.get_string(form.lang, "invalid_phone")
                     )
-                    return  # Stop processing and wait for correct input.
+                    return  # Stop processing and wait for a valid phone number.
+
+            # Validate age input.
+            if current_question_type == "age":
+                if not Validation.validate_age(user_response):
+                    await update.message.reply_text(
+                        self.localization.get_string(form.lang, "invalid_age")
+                    )
+                    return  # Stop processing and wait for a valid age.
 
             # Save the user's response to the current question.
             form.save_response(user_response)
