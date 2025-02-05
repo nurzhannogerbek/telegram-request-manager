@@ -103,33 +103,25 @@ class GoogleSheets:
         # Log successful validation.
         print("Service account credentials validated successfully.")
 
-    def save_user_state(self, user_id: str, lang: str, current_question_index: int, responses: dict, chat_id: str = ""):
+    def save_user_state(self, user_id: str, lang: str, current_question_index: int, responses: dict, chat_id: str):
         """
-        Saves the user's current state (language, question index, responses, and chat_id) to the Metadata sheet.
+        Saves the user's current state (language, question index, and responses) to the Metadata sheet.
+        Ensures that a valid Chat ID is always preserved.
         """
         try:
-            # Access the Metadata worksheet in the Google Sheet.
             user_states_sheet = self.client.open_by_key(os.getenv("GOOGLE_SHEET_ID")).worksheet("Metadata")
-
-            # Convert responses to a JSON string to store in the sheet.
             responses_json = json.dumps(responses)
-
-            # Prepare the row to store user state.
-            new_row = [str(user_id), lang or "", str(current_question_index), responses_json, str(chat_id or "")]
-
-            # Retrieve existing records.
+            existing_chat_id = self.get_chat_id(user_id)
+            if not chat_id and existing_chat_id:
+                chat_id = existing_chat_id
+            new_row = [str(user_id), str(chat_id), lang, str(current_question_index), responses_json]
             records = user_states_sheet.get_all_records()
-
-            # Check if the user already exists in the records.
             for i, record in enumerate(records):
                 if str(record.get('User ID', '')) == str(user_id):
-                    # Update the user's state in the corresponding row.
-                    user_states_sheet.update(f"A{i + 2}:E{i + 2}", [[str(x) for x in new_row]])  # type: ignore
+                    user_states_sheet.update(f"A{i + 2}:E{i + 2}", [new_row])
                     print(f"Updated state for user {user_id}.")
                     return
-
-            # Append the new row if the user does not exist.
-            user_states_sheet.append_row([str(x) for x in new_row])
+            user_states_sheet.append_row(new_row)
             print(f"Saved new state for user {user_id}.")
 
         except Exception as e:
@@ -137,33 +129,21 @@ class GoogleSheets:
 
     def get_user_state(self, user_id):
         """
-        Retrieves the saved state (language, question index, responses, and chat_id) for a given user.
-
-        :param user_id: The unique Telegram user ID.
-        :return: A tuple containing (lang, current_question_index, responses, chat_id).
+        Retrieves the saved state (language, question index, responses, and Chat ID) for a given user.
         """
         try:
-            # Access the Metadata worksheet in the Google Sheet.
             user_states_sheet = self.client.open_by_key(os.getenv("GOOGLE_SHEET_ID")).worksheet("Metadata")
-
-            # Retrieve all current rows from the sheet.
             records = user_states_sheet.get_all_records()
-
-            # Search for the user ID in the rows.
             for record in records:
                 if str(record['User ID']) == str(user_id):
-                    # Extract and return the saved state.
                     lang = record['Language']
                     current_question_index = int(record['Current Question Index'])
                     responses = json.loads(record['Responses']) if record['Responses'] else {}
-                    chat_id = record.get('Chat ID', None)
+                    chat_id = record.get('Chat ID', "")
                     return lang, current_question_index, responses, chat_id
-
         except Exception as e:
             print(f"Error retrieving user state for {user_id}: {e}")
-
-        # Return default state if the user is not found.
-        return None, 0, {}, None
+        return None, 0, {}, ""
 
     def get_chat_id(self, user_id):
         """
