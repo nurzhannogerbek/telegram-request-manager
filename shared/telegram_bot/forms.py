@@ -22,9 +22,8 @@ class ApplicationForm:
         :return: The next question as a string, or None if the form is complete.
         """
         if self.current_question_index < len(self.questions):
-            # Retrieve the current question based on the index.
             return self.questions[self.current_question_index]
-        return None  # Indicates that all questions have been answered.
+        return None
 
     def save_response(self, response):
         """

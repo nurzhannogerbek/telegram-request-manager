@@ -133,24 +133,25 @@ class BotHandlers:
         try:
             user_id = query.from_user.id
 
-            # Correctly retrieve user state, and destructure values into separate variables.
+            # Retrieve user state to get language or use fallback.
             lang, current_question_index, responses = self.google_sheets.get_user_state(user_id)
-
             if not lang:
-                # Fallback to default language if state is not found.
-                lang = context.user_data.get("lang", "en")
+                lang = context.user_data.get("lang", "en")  # Fallback to default language if not found.
                 print(f"Warning: No saved state found for user {user_id}, defaulting to language '{lang}'.")
 
             if query.data == "privacy_accept":
                 print(f"User {user_id} accepted the privacy policy in language '{lang}'.")
 
-                # Initialize the application form and set its state.
+                # Initialize a new application form.
                 form = ApplicationForm(lang, self.localization)
-                form.current_question_index = current_question_index  # Resume from saved question.
+                form.current_question_index = current_question_index  # Resume from saved question if exists.
                 form.responses = responses  # Load previously saved responses.
                 self.user_forms[user_id] = form
 
-                # Get the next question based on the saved state.
+                # Save the initial state to Google Sheets.
+                self.google_sheets.save_user_state(user_id, lang, form.current_question_index, form.responses)
+
+                # Get the first question and send it to the user.
                 question = form.get_next_question()
                 start_message = self.localization.get_string(lang, "start_questionnaire")
 
@@ -169,36 +170,60 @@ class BotHandlers:
         """
         Processes user responses and progresses through the application form.
 
-        :param update: The Telegram update object containing the user's response message.
-        :param context: The context object storing user-specific data.
+        Handles cases where the form is not found in memory and attempts to restore it from Google Sheets.
+        If the form is complete, saves responses and approves the join request.
         """
         try:
+            # Retrieve the user's Telegram ID from the update object.
             user_id = update.message.from_user.id
+
+            # Attempt to get the user's active form from the in-memory storage.
             form = self.user_forms.get(user_id)
 
+            # If the form is not found, try to restore the user's state from Google Sheets.
             if not form:
-                print(f"Warning: User {user_id} tried to respond without starting the form.")
-                await update.message.reply_text(self.localization.get_string("en", "error_message"))
-                return
+                # Retrieve the language, current question index, and responses from Google Sheets.
+                lang, current_question_index, responses = self.google_sheets.get_user_state(user_id)
 
-            lang = form.lang
-            print(f"User {user_id} responding in language '{lang}'.")
+                # If a saved state exists, restore the form and continue.
+                if lang:
+                    form = ApplicationForm(lang, self.localization)
+                    form.current_question_index = current_question_index  # Resume from the saved question.
+                    form.responses = responses  # Restore saved responses.
+                    self.user_forms[user_id] = form  # Save the form back to memory.
+                else:
+                    # If no saved state is found, notify the user of an error and return.
+                    await update.message.reply_text(self.localization.get_string("en", "error_message"))
+                    return
 
-            # Save the user's response and check if the form is complete.
+            # Save the user's response to the current question.
             form.save_response(update.message.text)
 
+            # Check if the form is complete (all questions answered).
             if form.is_complete():
-                print(f"User {user_id} completed the form. Saving responses to Google Sheets.")
+                # Save the completed responses to Google Sheets.
                 self.google_sheets.save_to_sheet(user_id, form.get_all_responses())
-                await update.message.reply_text(self.localization.get_string(lang, "application_complete"))
-                del self.user_forms[user_id]  # Clean up form data.
+
+                # Notify the user that the application is complete.
+                await update.message.reply_text(self.localization.get_string(form.lang, "application_complete"))
+
+                # Remove the form from memory since it is no longer needed.
+                del self.user_forms[user_id]
+
+                # Approve the user's join request automatically.
                 await self.approve_join_request(user_id, context)
             else:
+                # Get the next question based on the current question index.
                 next_question = form.get_next_question()
-                print(f"Next question for user {user_id}: {next_question}")
+
+                # Save the current form state (language, question index, responses) to Google Sheets.
+                self.google_sheets.save_user_state(user_id, form.lang, form.current_question_index, form.responses)
+
+                # Send the next question to the user.
                 await update.message.reply_text(next_question)
 
         except Exception as e:
+            # Log any errors that occur during form processing for debugging purposes.
             print(f"Error in handle_response handler: {e}")
 
     async def handle_join_request(self, update: Update, context):

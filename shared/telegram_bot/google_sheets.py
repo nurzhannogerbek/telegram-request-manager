@@ -116,10 +116,10 @@ class GoogleSheets:
             # Convert responses to a JSON string to store in the sheet.
             responses_json = json.dumps(responses)
 
-            # Prepare the row to store user state (converting each element to a string).
+            # Prepare the row to store user state.
             new_row = [str(user_id), lang, str(current_question_index), responses_json]
 
-            # Retrieve existing records safely.
+            # Retrieve existing records.
             records: list[dict] = user_states_sheet.get_all_records()
 
             # Check if the user already exists in the records.
