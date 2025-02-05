@@ -170,6 +170,9 @@ class BotHandlers:
     async def handle_response(self, update, context):
         """
         Processes user responses and progresses through the application form.
+        Validates user input for email, phone number, and age questions.
+        Saves user responses to Google Sheets when the form is complete.
+        Handles cases where form state is restored from Google Sheets.
         """
         try:
             # Retrieve the user's Telegram ID from the update object.
@@ -198,7 +201,10 @@ class BotHandlers:
 
             # Check if the form is complete (all questions answered).
             if form.is_complete():
-                # Map the responses and save them to Google Sheets.
+                # Save the final state of the form to Metadata before removing it.
+                self.google_sheets.save_user_state(user_id, form.lang, form.current_question_index, form.responses)
+
+                # Map the responses and save them to the "Telegram Users" sheet.
                 self.google_sheets.save_to_sheet(user_id, form.get_all_responses())
 
                 # Notify the user of successful completion.
@@ -213,7 +219,7 @@ class BotHandlers:
                 # Get the next question to ask.
                 next_question_text = form.get_next_question()
 
-                # Save the state of the form to Metadata.
+                # Save the current form state to Metadata.
                 self.google_sheets.save_user_state(user_id, form.lang, form.current_question_index, form.responses)
 
                 # Send the next question.
@@ -245,8 +251,13 @@ class BotHandlers:
         :param context: The context object storing user-specific data.
         """
         try:
+            chat_id = context.chat_data.get("chat_id")
+            if not chat_id:
+                print(f"Error: Chat ID not found in context for user {user_id}.")
+                return
+
             print(f"Approving join request for user {user_id}.")
-            await context.bot.approve_chat_join_request(chat_id=context.chat_data["chat_id"], user_id=user_id)
+            await context.bot.approve_chat_join_request(chat_id=chat_id, user_id=user_id)
             await self.utils.notify_admin(f"✅ User {user_id} has been approved to join the group.")
         except Exception as e:
             print(f"Error in approve_join_request handler: {e}")
