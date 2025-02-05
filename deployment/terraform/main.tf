@@ -34,7 +34,7 @@ resource "aws_lambda_function" "telegram_bot" {
   handler       = "lambda_function.lambda_handler" # Entry point for the Lambda function.
   runtime       = "python3.13" # Python runtime version for the function.
   filename      = "${path.module}/telegram_bot.zip" # Path to the zip file containing the Lambda code.
-  timeout       = 10 # The maximum time the function is allowed to run before timing out.
+  timeout       = 30 # The maximum time the function is allowed to run before timing out.
 
   # Set environment variables for the function.
   environment {
