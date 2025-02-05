@@ -164,3 +164,22 @@ class GoogleSheets:
 
         # Return default state if the user is not found.
         return None, 0, {}, None
+
+    def get_chat_id(self, user_id):
+        """
+        Retrieves the saved chat ID for a given user from the Metadata sheet.
+
+        :param user_id: The unique Telegram user ID.
+        :return: The chat ID as a string or an empty string if not found.
+        """
+        try:
+            user_states_sheet = self.client.open_by_key(os.getenv("GOOGLE_SHEET_ID")).worksheet("Metadata")
+            records = user_states_sheet.get_all_records()
+
+            for record in records:
+                if str(record['User ID']) == str(user_id):
+                    return record.get('Chat ID', "")
+        except Exception as e:
+            print(f"Error retrieving chat ID for user {user_id}: {e}")
+        return ""
+

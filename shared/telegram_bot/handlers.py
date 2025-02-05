@@ -177,7 +177,6 @@ class BotHandlers:
         try:
             user_id = update.message.from_user.id
             form = self.user_forms.get(user_id)
-
             if not form:
                 lang, current_question_index, responses, chat_id = self.google_sheets.get_user_state(user_id)
                 if lang:
@@ -192,7 +191,6 @@ class BotHandlers:
             user_response = update.message.text.strip()
             current_question_type = form.get_current_question_type()
 
-            # Validation based on question type
             if current_question_type == "email" and not Validation.validate_email(user_response):
                 await update.message.reply_text(self.localization.get_string(form.lang, "invalid_email"))
                 return
@@ -206,6 +204,13 @@ class BotHandlers:
             form.save_response(user_response)
 
             if form.is_complete():
+                self.google_sheets.save_user_state(
+                    user_id=str(user_id),
+                    lang=form.lang,
+                    current_question_index=form.current_question_index,
+                    responses=form.responses,
+                    chat_id=self.google_sheets.get_chat_id(user_id)
+                )
                 self.google_sheets.save_to_sheet(user_id, form.get_all_responses())
                 await update.message.reply_text(self.localization.get_string(form.lang, "application_complete"))
                 del self.user_forms[user_id]
@@ -216,7 +221,8 @@ class BotHandlers:
                     user_id=str(user_id),
                     lang=form.lang,
                     current_question_index=form.current_question_index,
-                    responses=form.responses
+                    responses=form.responses,
+                    chat_id=self.google_sheets.get_chat_id(user_id)
                 )
                 await update.message.reply_text(next_question_text)
 
@@ -248,17 +254,14 @@ class BotHandlers:
     async def approve_join_request(self, user_id, context):
         """
         Automatically approves the join request after the user completes the application.
-
-        :param user_id: The Telegram user ID of the user.
-        :param context: The context object storing user-specific data.
         """
         try:
             _, _, _, chat_id = self.google_sheets.get_user_state(user_id)
+
             if not chat_id:
                 print(f"Error: Chat ID not found for user {user_id} in Metadata.")
                 return
 
-            print(f"Approving join request for user {user_id} in chat {chat_id}.")
             await context.bot.approve_chat_join_request(chat_id=int(chat_id), user_id=user_id)
             await self.utils.notify_admin(f"✅ User {user_id} has been approved to join the group.")
         except Exception as e:
