@@ -144,6 +144,8 @@ class BotHandlers:
                 lang = context.user_data.get("lang", "en")  # Fallback to default language if not found.
                 print(f"Warning: No saved state found for user {user_id}, defaulting to language '{lang}'.")
 
+            await query.edit_message_text("⏳")
+
             if query.data == "privacy_accept":
                 print(f"User {user_id} accepted the privacy policy in language '{lang}'.")
 
@@ -167,12 +169,15 @@ class BotHandlers:
                 start_message = self.localization.get_string(lang, "start_questionnaire")
 
                 print(f"First question for user {user_id}: {question}")
-                await query.edit_message_text(f"{start_message} {question}")
+                await context.bot.send_message(
+                    chat_id=user_id,
+                    text=f"{start_message} {question}"
+                )
 
             elif query.data == "privacy_decline":
                 print(f"User {user_id} declined the privacy policy.")
                 decline_message = self.localization.get_string(lang, "decline_message")
-                await query.edit_message_text(decline_message)
+                await context.bot.send_message(chat_id=user_id, text=decline_message)
 
         except Exception as e:
             print(f"Error in handle_privacy_response handler: {e}")
@@ -186,6 +191,7 @@ class BotHandlers:
         """
         try:
             user_id = update.message.from_user.id
+            await update.message.reply_text("⏳")
             form = self.user_forms.get(user_id)
             if not form:
                 lang, current_question_index, responses, chat_id = self.google_sheets.get_user_state(user_id)
@@ -197,10 +203,8 @@ class BotHandlers:
                 else:
                     await update.message.reply_text(self.localization.get_string("en", "error_message"))
                     return
-
             user_response = update.message.text.strip()
             current_question_type = form.get_current_question_type()
-
             if current_question_type == "email" and not Validation.validate_email(user_response):
                 await update.message.reply_text(self.localization.get_string(form.lang, "invalid_email"))
                 return
@@ -210,9 +214,7 @@ class BotHandlers:
             if current_question_type == "age" and not Validation.validate_age(user_response):
                 await update.message.reply_text(self.localization.get_string(form.lang, "invalid_age"))
                 return
-
             form.save_response(user_response)
-
             if form.is_complete():
                 self.google_sheets.save_user_state(
                     user_id=str(user_id),
