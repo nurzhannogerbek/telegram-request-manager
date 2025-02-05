@@ -105,20 +105,16 @@ class GoogleSheets:
 
     def save_user_state(self, user_id: str, lang: str, current_question_index: int, responses: dict, chat_id: str):
         """
-        Saves the user's current state (language, question index, and responses) to the Metadata sheet.
-        Ensures that a valid Chat ID is always preserved.
+        Optimized method for saving user state to the Metadata sheet.
         """
         try:
             user_states_sheet = self.client.open_by_key(os.getenv("GOOGLE_SHEET_ID")).worksheet("Metadata")
             responses_json = json.dumps(responses)
-            existing_chat_id = self.get_chat_id(user_id)
-            if not chat_id and existing_chat_id:
-                chat_id = existing_chat_id
             new_row = [str(user_id), str(chat_id), lang, str(current_question_index), responses_json]
             records = user_states_sheet.get_all_records()
             for i, record in enumerate(records):
                 if str(record.get('User ID', '')) == str(user_id):
-                    user_states_sheet.update(f"A{i + 2}:E{i + 2}", [new_row])
+                    user_states_sheet.update(f"A{i + 2}:E{i + 2}", [new_row])  # type: ignore
                     print(f"Updated state for user {user_id}.")
                     return
             user_states_sheet.append_row(new_row)
