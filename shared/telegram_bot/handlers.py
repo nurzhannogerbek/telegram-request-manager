@@ -235,7 +235,7 @@ class BotHandlers:
                 await self.approve_join_request(user_id, context)
             else:
                 # Get the next question based on the current question index.
-                next_question, _ = form.get_next_question()
+                next_question, _ = form.get_next_question()  # Ignore the question type here.
                 self.google_sheets.save_user_state(user_id, form.lang, form.current_question_index, form.responses)
 
                 # Send the next question to the user.
