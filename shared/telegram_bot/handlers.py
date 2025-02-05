@@ -184,17 +184,13 @@ class BotHandlers:
 
             # If the form is not found, try to restore the user's state from Google Sheets.
             if not form:
-                # Retrieve the language, current question index, and responses from Google Sheets.
                 lang, current_question_index, responses = self.google_sheets.get_user_state(user_id)
-
-                # If a saved state exists, restore the form and continue.
                 if lang:
                     form = ApplicationForm(lang, self.localization)
-                    form.current_question_index = current_question_index  # Resume from saved question.
-                    form.responses = responses  # Restore saved responses.
-                    self.user_forms[user_id] = form  # Save the form back to memory.
+                    form.current_question_index = current_question_index
+                    form.responses = responses
+                    self.user_forms[user_id] = form
                 else:
-                    # If no saved state is found, notify the user of an error and return.
                     await update.message.reply_text(self.localization.get_string("en", "error_message"))
                     return
 
@@ -205,7 +201,6 @@ class BotHandlers:
 
             # Validate user response based on the type of question.
             if current_question_type == "email":
-                # Validate the email using a regex-based validator.
                 if not Validation.validate_email(user_response):
                     await update.message.reply_text(
                         self.localization.get_string(form.lang, "invalid_email")
@@ -213,7 +208,6 @@ class BotHandlers:
                     return  # Stop processing and wait for correct input.
 
             if current_question_type == "phone":
-                # Validate the phone number using a regex-based validator.
                 if not Validation.validate_phone(user_response):
                     await update.message.reply_text(
                         self.localization.get_string(form.lang, "invalid_phone")
@@ -225,29 +219,17 @@ class BotHandlers:
 
             # Check if the form is complete (all questions answered).
             if form.is_complete():
-                # Save the completed responses to Google Sheets.
                 self.google_sheets.save_to_sheet(user_id, form.get_all_responses())
-
-                # Notify the user that the application is complete.
                 await update.message.reply_text(self.localization.get_string(form.lang, "application_complete"))
-
-                # Remove the form from memory since it is no longer needed.
                 del self.user_forms[user_id]
-
-                # Approve the user's join request automatically.
                 await self.approve_join_request(user_id, context)
             else:
                 # Get the next question to be asked.
                 next_question_text = form.get_next_question()
-
-                # Save the current form state (language, question index, responses) to Google Sheets.
                 self.google_sheets.save_user_state(user_id, form.lang, form.current_question_index, form.responses)
-
-                # Send the next question to the user.
                 await update.message.reply_text(next_question_text)
 
         except Exception as e:
-            # Log any errors that occur during form processing for debugging purposes.
             print(f"Error in handle_response handler: {e}")
 
     async def handle_join_request(self, update: Update, context):

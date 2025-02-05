@@ -43,15 +43,17 @@ class ApplicationForm:
         :param response: The user's answer to the current question as a string.
         """
         if self.current_question_index < len(self.questions):
-            # Map the current question to the user's response.
-            current_question = self.questions[self.current_question_index]
+            # Extract the question text instead of using the entire dict.
+            current_question_text = self.questions[self.current_question_index]["question"]
+
             response = response.strip()
 
             # Do not save empty responses; log an error or handle it accordingly.
             if not response:
                 raise ValueError("The response cannot be empty.")
 
-            self.responses[current_question] = response  # Save response.
+            # Save the response with the question text as the key.
+            self.responses[current_question_text] = response
             self.current_question_index += 1  # Move to the next question.
 
     def is_complete(self):
