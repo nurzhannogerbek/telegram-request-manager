@@ -170,10 +170,6 @@ class BotHandlers:
     async def handle_response(self, update, context):
         """
         Processes user responses and progresses through the application form.
-
-        Validates user input for email, phone number, and age questions.
-        Saves user responses to Google Sheets when the form is complete.
-        Handles cases where form state is restored from Google Sheets.
         """
         try:
             # Retrieve the user's Telegram ID from the update object.
@@ -186,73 +182,44 @@ class BotHandlers:
             if not form:
                 lang, current_question_index, responses = self.google_sheets.get_user_state(user_id)
                 if lang:
-                    # Recreate the form with the restored state.
                     form = ApplicationForm(lang, self.localization)
-                    form.current_question_index = current_question_index  # Resume from saved question.
-                    form.responses = responses  # Restore saved responses.
-                    self.user_forms[user_id] = form  # Save the form back to memory.
+                    form.current_question_index = current_question_index
+                    form.responses = responses
+                    self.user_forms[user_id] = form
                 else:
-                    # If no saved state is found, notify the user of an error and return.
                     await update.message.reply_text(self.localization.get_string("en", "error_message"))
                     return
 
             # Get the current question text and its type.
-            current_question_text = form.get_next_question()
-            current_question_type = form.get_current_question_type()
             user_response = update.message.text.strip()
-
-            # Validate email input.
-            if current_question_type == "email":
-                if not Validation.validate_email(user_response):
-                    await update.message.reply_text(
-                        self.localization.get_string(form.lang, "invalid_email")
-                    )
-                    return  # Stop processing and wait for a valid email.
-
-            # Validate phone input.
-            if current_question_type == "phone":
-                if not Validation.validate_phone(user_response):
-                    await update.message.reply_text(
-                        self.localization.get_string(form.lang, "invalid_phone")
-                    )
-                    return  # Stop processing and wait for a valid phone number.
-
-            # Validate age input.
-            if current_question_type == "age":
-                if not Validation.validate_age(user_response):
-                    await update.message.reply_text(
-                        self.localization.get_string(form.lang, "invalid_age")
-                    )
-                    return  # Stop processing and wait for a valid age.
 
             # Save the user's response to the current question.
             form.save_response(user_response)
 
             # Check if the form is complete (all questions answered).
             if form.is_complete():
-                # Map the responses to match the column headers in the Google Sheet and save them.
+                # Map the responses and save them to Google Sheets.
                 self.google_sheets.save_to_sheet(user_id, form.get_all_responses())
 
-                # Notify the user that the application is complete.
+                # Notify the user of successful completion.
                 await update.message.reply_text(self.localization.get_string(form.lang, "application_complete"))
 
-                # Remove the form from memory since it is no longer needed.
+                # Remove the form from memory.
                 del self.user_forms[user_id]
 
-                # Automatically approve the user's join request to the group.
+                # Automatically approve the user's join request.
                 await self.approve_join_request(user_id, context)
             else:
-                # Get the next question to be asked.
+                # Get the next question to ask.
                 next_question_text = form.get_next_question()
 
-                # Save the current form state (language, question index, responses) to Google Sheets.
+                # Save the state of the form to Metadata.
                 self.google_sheets.save_user_state(user_id, form.lang, form.current_question_index, form.responses)
 
-                # Send the next question to the user.
+                # Send the next question.
                 await update.message.reply_text(next_question_text)
 
         except Exception as e:
-            # Log any errors that occur during form processing for debugging purposes.
             print(f"Error in handle_response handler: {e}")
 
     async def handle_join_request(self, update: Update, context):

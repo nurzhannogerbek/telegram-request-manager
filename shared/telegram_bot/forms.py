@@ -24,7 +24,7 @@ class ApplicationForm:
         if self.current_question_index < len(self.questions):
             # Return only the question text, not the type.
             return self.questions[self.current_question_index]["question"]
-        return None
+        return None  # Return None if the form is complete.
 
     def get_current_question_type(self):
         """
@@ -62,11 +62,7 @@ class ApplicationForm:
 
         :return: True if all questions have been answered, False otherwise.
         """
-        # Check if all questions have corresponding non-empty responses.
-        return (
-                self.current_question_index >= len(self.questions)
-                and all(self.responses.get(question, "").strip() for question in self.questions)
-        )
+        return self.current_question_index >= len(self.questions)
 
     def get_unanswered_questions(self):
         """
