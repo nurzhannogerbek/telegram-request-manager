@@ -57,20 +57,24 @@ class BotHandlers:
         """
         query = update.callback_query  # Get callback query.
         await query.answer()  # Acknowledge the query.
-
         try:
             user_id = query.from_user.id  # Get user ID.
             lang = query.data.split("_")[1]  # Extract the selected language code.
 
             print(f"User {user_id} selected language: {lang}.")
             context.user_data["lang"] = lang  # Store language in context.
+            chat_id = self.google_sheets.get_chat_id(user_id)
 
             # Initialize the form state with default values (no responses and question index 0).
             initial_question_index = 0
             initial_responses = {}
-
-            # Save the user's state immediately.
-            self.google_sheets.save_user_state(user_id, lang, initial_question_index, initial_responses)
+            self.google_sheets.save_user_state(
+                user_id=str(user_id),
+                lang=lang,
+                current_question_index=initial_question_index,
+                responses=initial_responses,
+                chat_id=chat_id
+            )
 
             # Send the privacy policy using the chosen language.
             await self.send_privacy_policy(update, context)
@@ -150,7 +154,13 @@ class BotHandlers:
                 self.user_forms[user_id] = form
 
                 # Save the initial state to Google Sheets.
-                self.google_sheets.save_user_state(user_id, lang, form.current_question_index, form.responses, chat_id)
+                self.google_sheets.save_user_state(
+                    user_id=str(user_id),
+                    lang=lang,
+                    current_question_index=form.current_question_index,
+                    responses=form.responses,
+                    chat_id=self.google_sheets.get_chat_id(user_id)
+                )
 
                 # Get the first question and send it to the user.
                 question = form.get_next_question()
