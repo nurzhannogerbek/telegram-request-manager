@@ -1,10 +1,8 @@
 import json
 import asyncio
 from telegram import Update
-from shared.telegram_bot.bootstrap import Bootstrap
+from shared.telegram_bot.globals import application
 from shared.telegram_bot.logger import logger
-
-application = Bootstrap.get_application()
 
 async def async_lambda_handler(event):
     try:
@@ -16,7 +14,7 @@ async def async_lambda_handler(event):
             "body": json.dumps({"message": "Update processed successfully."})
         }
     except json.JSONDecodeError as e:
-        logger.error(f"JSON decoding error: {e}. Event: {event}", exc_info=True)
+        logger.error(f"JSON decoding error: {e}. Event: {event}")
         return {
             "statusCode": 200,
             "body": json.dumps({"message": "Invalid JSON payload."})

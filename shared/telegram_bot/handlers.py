@@ -2,18 +2,16 @@ from telegram.ext import CommandHandler, MessageHandler, CallbackQueryHandler, C
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from shared.telegram_bot.forms import ApplicationForm
 from shared.telegram_bot.localization import Localization
-from shared.telegram_bot.google_sheets import GoogleSheets
 from shared.telegram_bot.validation import Validation
 from shared.telegram_bot.logger import logger
-from shared.telegram_bot.globals import telegram_bot
-from shared.telegram_bot.utils import Utils
+from shared.telegram_bot.globals import telegram_bot, google_sheets, utils
 
 class BotHandlers:
     def __init__(self):
         self.user_forms = {}
         self.localization = Localization()
-        self.google_sheets = GoogleSheets()
-        self.utils = Utils()
+        self.google_sheets = google_sheets
+        self.utils = utils
         self.bot = telegram_bot
 
     async def start(self, update, context):
@@ -60,9 +58,13 @@ class BotHandlers:
                 ]
             ]
             if update.callback_query:
-                await update.callback_query.edit_message_text(text=message_text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown")
+                await update.callback_query.edit_message_text(
+                    text=message_text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown"
+                )
             else:
-                await self.bot.send_message(chat_id=user_id, text=message_text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown")
+                await self.bot.send_message(
+                    chat_id=user_id, text=message_text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown"
+                )
         except Exception as e:
             logger.error(f"Error in send_privacy_policy handler: {e}", exc_info=True)
 
@@ -160,9 +162,3 @@ class BotHandlers:
             return False
         form.save_response(user_response)
         return True
-
-    @staticmethod
-    def _get_user_id_from_update(update):
-        if update.callback_query:
-            return update.callback_query.from_user.id
-        return update.message.from_user.id

@@ -4,12 +4,15 @@ class Config:
     TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
     if not TELEGRAM_BOT_TOKEN:
         raise EnvironmentError("TELEGRAM_BOT_TOKEN environment variable is not set.")
+
     ADMIN_CHAT_ID = os.getenv("ADMIN_CHAT_ID")
     if not ADMIN_CHAT_ID:
         raise EnvironmentError("ADMIN_CHAT_ID environment variable is not set.")
+
     GOOGLE_SHEET_ID = os.getenv("GOOGLE_SHEET_ID")
     if not GOOGLE_SHEET_ID:
         raise EnvironmentError("GOOGLE_SHEET_ID environment variable is not set.")
+
     SERVICE_ACCOUNT_INFO = {
         "type": os.getenv("SERVICE_ACCOUNT_TYPE"),
         "project_id": os.getenv("SERVICE_ACCOUNT_PROJECT_ID"),
@@ -22,6 +25,7 @@ class Config:
         "auth_provider_x509_cert_url": os.getenv("SERVICE_ACCOUNT_AUTH_PROVIDER_CERT_URL"),
         "client_x509_cert_url": os.getenv("SERVICE_ACCOUNT_CLIENT_CERT_URL"),
     }
+
     PRIVACY_POLICY_URLS = {
         "ru": os.getenv("PRIVACY_POLICY_URL_RU"),
         "kz": os.getenv("PRIVACY_POLICY_URL_KZ"),

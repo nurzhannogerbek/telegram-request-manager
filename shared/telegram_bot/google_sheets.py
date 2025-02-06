@@ -1,8 +1,8 @@
 import json
 from gspread import Client, exceptions
-from shared.telegram_bot.config import Config
-from shared.telegram_bot.logger import logger
 from google.oauth2.service_account import Credentials
+from shared.telegram_bot.logger import logger
+from shared.telegram_bot.config import Config
 
 CREDENTIALS = None
 SHEET_CLIENT = None
