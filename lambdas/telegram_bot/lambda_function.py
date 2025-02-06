@@ -16,7 +16,7 @@ async def async_lambda_handler(event):
             "body": json.dumps({"message": "Update processed successfully."})
         }
     except json.JSONDecodeError as e:
-        logger.error(f"JSON decoding error: {e}. Event: {event}")
+        logger.error(f"JSON decoding error: {e}. Event: {event}", exc_info=True)
         return {
             "statusCode": 200,
             "body": json.dumps({"message": "Invalid JSON payload."})

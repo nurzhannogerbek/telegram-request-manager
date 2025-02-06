@@ -9,11 +9,9 @@ SHEET_CLIENT = None
 MAIN_SHEET = None
 METADATA_SHEET = None
 
-
 def get_google_sheets_connection(force_refresh=False):
     global CREDENTIALS, SHEET_CLIENT, MAIN_SHEET, METADATA_SHEET
     if force_refresh or not CREDENTIALS or not SHEET_CLIENT:
-        logger.info("Initializing or refreshing Google Sheets connection...")
         CREDENTIALS = Credentials.from_service_account_info(
             Config.SERVICE_ACCOUNT_INFO, scopes=["https://www.googleapis.com/auth/spreadsheets"]
         )
@@ -23,7 +21,6 @@ def get_google_sheets_connection(force_refresh=False):
         MAIN_SHEET = google_sheet.sheet1
         METADATA_SHEET = google_sheet.worksheet("Metadata")
     return MAIN_SHEET, METADATA_SHEET
-
 
 class GoogleSheets:
     def __init__(self):

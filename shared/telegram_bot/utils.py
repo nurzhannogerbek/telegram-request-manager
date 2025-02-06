@@ -1,10 +1,11 @@
 from shared.telegram_bot.logger import logger
-from shared.telegram_bot.bootstrap import Bootstrap
+from shared.telegram_bot.config import Config
+from shared.telegram_bot.globals import telegram_bot
 
 class Utils:
     def __init__(self):
-        self.bot = Bootstrap.get_telegram_bot().application.bot
-        self.admin_chat_id = Bootstrap.get_utils().admin_chat_id
+        self.bot = telegram_bot
+        self.admin_chat_id = Config.ADMIN_CHAT_ID
 
     def notify_admin(self, message):
         try:
@@ -32,7 +33,7 @@ class Utils:
 
     @staticmethod
     def fetch_privacy_policy(lang, localization):
-        policy_url = Bootstrap.get_utils().fetch_privacy_policy_url(lang)
+        policy_url = Config.get_privacy_policy_url(lang)
         if not policy_url:
             return localization.get_string(lang, "error_message")
         link_text = localization.get_string(lang, "privacy_policy_link_text")
