@@ -2,12 +2,12 @@ import json
 import asyncio
 from telegram import Update
 from shared.telegram_bot.logger import logger
-from shared.telegram_bot.bootstrap import Bootstrap
+from shared.telegram_bot.bootstrap import ensure_application_ready
 import shared.telegram_bot.globals as globs
 
 async def async_lambda_handler(event):
     logger.info("Lambda async handler start. Checking application readiness.")
-    Bootstrap.ensure_application_ready()
+    ensure_application_ready()
     logger.info("Initializing application if needed.")
     await globs.application.initialize()
     try:
