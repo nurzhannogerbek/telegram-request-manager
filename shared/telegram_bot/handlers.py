@@ -4,14 +4,15 @@ from shared.telegram_bot.forms import ApplicationForm
 from shared.telegram_bot.localization import Localization
 from shared.telegram_bot.validation import Validation
 from shared.telegram_bot.logger import logger
-from shared.telegram_bot.globals import telegram_bot, google_sheets, utils
+from shared.telegram_bot.globals import telegram_bot
+from shared.telegram_bot.bootstrap import Bootstrap
 
 class BotHandlers:
     def __init__(self):
         self.user_forms = {}
         self.localization = Localization()
-        self.google_sheets = google_sheets
-        self.utils = utils
+        self.google_sheets = Bootstrap.get_google_sheets()
+        self.utils = Bootstrap.get_utils()
         self.bot = telegram_bot
 
     async def start(self, update, context):
