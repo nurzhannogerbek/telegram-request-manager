@@ -15,11 +15,23 @@ async def async_lambda_handler(event):
             "statusCode": 200,
             "body": json.dumps({"message": "Update processed successfully."})
         }
-    except Exception as e:
-        logger.error(f"Unexpected error: {e}", exc_info=True)
+    except json.JSONDecodeError as e:
+        logger.error(f"JSON decoding error: {e}. Event: {event}")
         return {
             "statusCode": 200,
-            "body": json.dumps({"message": "Error occurred, logged internally."})
+            "body": json.dumps({"message": "Invalid JSON payload."})
+        }
+    except KeyError as e:
+        logger.error(f"KeyError: {e}. Event: {event}")
+        return {
+            "statusCode": 200,
+            "body": json.dumps({"message": "Missing required data in the request."})
+        }
+    except Exception as e:
+        logger.error(f"Unexpected error processing event: {event}. Error: {e}", exc_info=True)
+        return {
+            "statusCode": 200,
+            "body": json.dumps({"message": "Internal server error occurred."})
         }
 
 def lambda_handler(event, context):
