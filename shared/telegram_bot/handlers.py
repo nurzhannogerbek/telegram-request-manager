@@ -162,20 +162,28 @@ class BotHandlers:
                     chat_id=self.google_sheets.get_chat_id(user_id)
                 )
 
-                # Get the first question and send it to the user.
+                # Get the first question.
                 question = form.get_next_question()
                 start_message = self.localization.get_string(lang, "start_questionnaire")
 
+                # Replace the privacy message with start message.
+                await query.edit_message_text(
+                    text=start_message
+                )
+
+                # Send the first question as a new message.
                 print(f"First question for user {user_id}: {question}")
                 await context.bot.send_message(
                     chat_id=user_id,
-                    text=f"{start_message} {question}"
+                    text=question
                 )
 
             elif query.data == "privacy_decline":
                 print(f"User {user_id} declined the privacy policy.")
                 decline_message = self.localization.get_string(lang, "decline_message")
-                await context.bot.send_message(chat_id=user_id, text=decline_message)
+                await query.edit_message_text(
+                    text=decline_message
+                )
 
         except Exception as e:
             print(f"Error in handle_privacy_response handler: {e}")
