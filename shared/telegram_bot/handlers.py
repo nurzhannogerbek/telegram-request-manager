@@ -144,8 +144,6 @@ class BotHandlers:
                 lang = context.user_data.get("lang", "en")  # Fallback to default language if not found.
                 print(f"Warning: No saved state found for user {user_id}, defaulting to language '{lang}'.")
 
-            await query.edit_message_text("⏳")
-
             if query.data == "privacy_accept":
                 print(f"User {user_id} accepted the privacy policy in language '{lang}'.")
 
@@ -191,7 +189,6 @@ class BotHandlers:
         """
         try:
             user_id = update.message.from_user.id
-            await update.message.reply_text("⏳")
             form = self.user_forms.get(user_id)
             if not form:
                 lang, current_question_index, responses, chat_id = self.google_sheets.get_user_state(user_id)
