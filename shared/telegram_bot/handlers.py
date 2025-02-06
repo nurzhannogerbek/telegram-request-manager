@@ -185,7 +185,6 @@ class BotHandlers:
         logger.info(f"_validate_and_handle_response for user {user_id}, response={user_response}")
         current_question_type = form.get_current_question_type()
         logger.info(f"Current question type for user {user_id}: {current_question_type}")
-
         if current_question_type == "email" and not Validation.validate_email(user_response):
             logger.info(f"User {user_id} failed email validation.")
             await self.bot.send_message(chat_id=user_id, text=self.localization.get_string(form.lang, "invalid_email"))
