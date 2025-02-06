@@ -4,13 +4,13 @@ from telegram import Update
 from shared.telegram_bot.bootstrap import Bootstrap
 from shared.telegram_bot.logger import logger
 
-global_telegram_bot = Bootstrap.get_telegram_bot()
+application = Bootstrap.get_application()
 
 async def async_lambda_handler(event):
     try:
         update_data = json.loads(event["body"])
-        update = Update.de_json(update_data, global_telegram_bot.application.bot)
-        await global_telegram_bot.application.process_update(update)
+        update = Update.de_json(update_data, application.bot)
+        await application.process_update(update)
         return {
             "statusCode": 200,
             "body": json.dumps({"message": "Update processed successfully."})
@@ -20,12 +20,6 @@ async def async_lambda_handler(event):
         return {
             "statusCode": 200,
             "body": json.dumps({"message": "Invalid JSON payload."})
-        }
-    except KeyError as e:
-        logger.error(f"KeyError: {e}. Event: {event}")
-        return {
-            "statusCode": 200,
-            "body": json.dumps({"message": "Missing required data in the request."})
         }
     except Exception as e:
         logger.error(f"Unexpected error processing event: {event}. Error: {e}", exc_info=True)

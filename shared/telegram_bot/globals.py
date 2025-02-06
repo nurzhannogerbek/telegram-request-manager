@@ -1,8 +1,6 @@
-from shared.telegram_bot.main import TelegramBot
-from shared.telegram_bot.utils import Utils
-from shared.telegram_bot.google_sheets import GoogleSheets
+from telegram.ext import Application
+from telegram import Bot
 from shared.telegram_bot.config import Config
 
-GLOBAL_TELEGRAM_BOT = TelegramBot(Config.TELEGRAM_BOT_TOKEN)
-GLOBAL_UTILS = Utils()
-GLOBAL_GOOGLE_SHEETS = GoogleSheets()
+telegram_bot = Bot(token=Config.TELEGRAM_BOT_TOKEN)
+application = Application.builder().token(Config.TELEGRAM_BOT_TOKEN).build()
