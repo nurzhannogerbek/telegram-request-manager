@@ -7,7 +7,7 @@ import shared.telegram_bot.globals as globs
 
 async def async_lambda_handler(event):
     logger.info("Lambda async handler start. Checking application readiness.")
-    ensure_application_ready()
+    await ensure_application_ready()
     logger.info("Initializing application if needed.")
     await globs.application.initialize()
     try:
@@ -16,7 +16,6 @@ async def async_lambda_handler(event):
         logger.info(f"Parsed Update: {update.to_dict()}")
         logger.info("Processing update with application.")
         await globs.application.process_update(update)
-        logger.info("Successfully processed update. Return 200.")
         return {
             "statusCode": 200,
             "body": json.dumps({"message": "Update processed successfully."})
@@ -36,4 +35,5 @@ async def async_lambda_handler(event):
 
 def lambda_handler(event, context):
     logger.info("Lambda sync handler, calling async.")
-    return asyncio.run(async_lambda_handler(event))
+    loop = asyncio.get_event_loop()
+    return loop.run_until_complete(async_lambda_handler(event))
