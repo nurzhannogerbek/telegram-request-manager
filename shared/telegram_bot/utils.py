@@ -1,7 +1,6 @@
 from shared.telegram_bot.logger import logger
 from shared.telegram_bot.bootstrap import Bootstrap
 
-
 class Utils:
     def __init__(self):
         self.bot = Bootstrap.get_telegram_bot().application.bot
@@ -36,6 +35,5 @@ class Utils:
         policy_url = Bootstrap.get_utils().fetch_privacy_policy_url(lang)
         if not policy_url:
             return localization.get_string(lang, "error_message")
-
         link_text = localization.get_string(lang, "privacy_policy_link_text")
         return f"🔗[{link_text}]({policy_url})"
