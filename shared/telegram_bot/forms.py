@@ -41,13 +41,15 @@ class ApplicationForm:
         return None
 
     def save_response(self, response):
-        if self.current_question_index < len(self.questions):
-            response = response.strip()
-            if not response:
-                raise ValueError("The response cannot be empty.")
-            current_question_text = self.questions[self.current_question_index]["question"]
-            self.responses.append((current_question_text, response))
-            self.current_question_index += 1
+        response = response.strip()
+        if not response:
+            raise ValueError("The response cannot be empty.")
+        current_question_text = self.questions[self.current_question_index]["question"]
+        if not isinstance(self.responses, list):
+            logger.warning(f"Expected 'responses' to be a list, resetting to empty list.")
+            self.responses = []
+        self.responses.append((current_question_text, response))
+        self.current_question_index += 1
 
     def is_complete(self):
         return self.current_question_index >= len(self.questions)

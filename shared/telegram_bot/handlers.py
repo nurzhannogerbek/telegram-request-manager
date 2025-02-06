@@ -35,7 +35,7 @@ class BotHandlers:
         logger.info(f"User {user_id} selected language {lang}.")
         context.user_data["lang"] = lang
         chat_id = self.google_sheets.get_chat_id(user_id)
-        self._save_user_state(user_id, lang, 0, {}, chat_id)
+        self._save_user_state(user_id, lang, 0, [], chat_id)
         await self.send_privacy_policy(update, context)
 
     async def send_privacy_policy(self, update, context):
@@ -66,6 +66,9 @@ class BotHandlers:
         user_id = query.from_user.id
         logger.info(f"Processing privacy response for user {user_id}.")
         lang, current_question_index, responses, chat_id = self.google_sheets.get_user_state(user_id)
+        if isinstance(responses, dict):
+            responses = [(k, v) for k, v in responses.items()]
+
         if query.data == "privacy_accept":
             logger.info(f"User {user_id} accepted privacy policy.")
             form = ApplicationForm(lang, self.localization)
@@ -89,13 +92,19 @@ class BotHandlers:
                 logger.info(f"User {user_id} has no language preference set.")
                 await update.message.reply_text(self.localization.get_string("en", "error_message"))
                 return
+
+            if isinstance(responses, dict):
+                responses = [(q, a) for q, a in responses.items()]
+
             form = ApplicationForm(lang, self.localization)
             form.current_question_index = current_question_index
             form.responses = responses
             self.user_forms[user_id] = form
+
         user_response = update.message.text.strip()
         if not await self._validate_and_handle_response(user_response, form, user_id):
             return
+
         if form.is_complete():
             logger.info(f"Form completed for user {user_id}, saving responses.")
             self.google_sheets.save_to_sheet(user_id, form.get_all_responses())
@@ -111,7 +120,7 @@ class BotHandlers:
         user_id = join_request.from_user.id
         chat_id = join_request.chat.id
         logger.info(f"Processing join request from user {user_id} in chat {chat_id}.")
-        self._save_user_state(user_id, "", 0, {}, str(chat_id))
+        self._save_user_state(user_id, "", 0, [], str(chat_id))
         await self.start(update, context)
 
     async def approve_join_request(self, user_id, context):

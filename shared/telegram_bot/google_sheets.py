@@ -50,7 +50,7 @@ class GoogleSheets:
             self.main_sheet.append_row(row)
         self._retry_on_failure(append_row)
 
-    def save_user_state(self, user_id: str, lang: str, current_question_index: int, responses: dict, chat_id: str):
+    def save_user_state(self, user_id: str, lang: str, current_question_index: int, responses: list, chat_id: str):
         logger.info(f"save_user_state: user_id={user_id}, lang={lang}, cqi={current_question_index}, chat_id={chat_id}, responses={responses}")
         def save_state():
             responses_json = json.dumps(responses)
@@ -69,13 +69,16 @@ class GoogleSheets:
             records = self.metadata_sheet.get_all_records()
             for record in records:
                 if str(record['User ID']) == str(user_id):
+                    responses = json.loads(record['Responses']) if record['Responses'] else []
+                    if isinstance(responses, dict):
+                        responses = [(k, v) for k, v in responses.items()]
                     return (
                         record['Language'],
                         int(record['Current Question Index']),
-                        json.loads(record['Responses']) if record['Responses'] else {},
+                        responses,
                         record.get('Chat ID', "")
                     )
-            return None, 0, {}, ""
+            return None, 0, [], ""
         return self._retry_on_failure(fetch_state)
 
     def get_chat_id(self, user_id):
