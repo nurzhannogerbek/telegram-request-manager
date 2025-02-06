@@ -3,17 +3,26 @@ import asyncio
 from telegram import Update
 from shared.telegram_bot.globals import application
 from shared.telegram_bot.logger import logger
+from shared.telegram_bot.handlers import BotHandlers
 
 async def async_lambda_handler(event):
-    logger.info("Lambda async handler invoked. About to initialize application.")
+    logger.info("Lambda synchronous handler started. Passing to async handler.")
     try:
+        logger.info("Registering BotHandlers now.")
+        handlers = BotHandlers()
+        handlers.setup(application)
+
+        logger.info("Calling application.initialize().")
         await application.initialize()
-        logger.info("Application initialized. About to parse update from event body.")
+
+        logger.info("Parsing event body as update.")
         update_data = json.loads(event["body"])
         update = Update.de_json(update_data, application.bot)
         logger.info(f"Parsed Update: {update.to_dict()}")
-        logger.info("About to call process_update on the Application.")
+
+        logger.info("About to process update with application.")
         await application.process_update(update)
+
         logger.info("Successfully processed update. Returning 200 OK.")
         return {
             "statusCode": 200,
@@ -33,5 +42,5 @@ async def async_lambda_handler(event):
         }
 
 def lambda_handler(event, context):
-    logger.info("Lambda synchronous handler started. Passing to async handler.")
+    logger.info("Lambda synchronous handler started.")
     return asyncio.run(async_lambda_handler(event))
