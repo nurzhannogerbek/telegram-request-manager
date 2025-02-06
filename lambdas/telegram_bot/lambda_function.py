@@ -6,6 +6,7 @@ from shared.telegram_bot.logger import logger
 
 async def async_lambda_handler(event):
     try:
+        await application.initialize()
         update_data = json.loads(event["body"])
         update = Update.de_json(update_data, application.bot)
         await application.process_update(update)
