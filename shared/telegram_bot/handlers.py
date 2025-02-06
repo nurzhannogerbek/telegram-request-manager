@@ -5,6 +5,7 @@ from shared.telegram_bot.localization import Localization
 from shared.telegram_bot.validation import Validation
 from shared.telegram_bot.logger import logger
 
+
 class BotHandlers:
     def __init__(self, google_sheets, utils, bot):
         logger.info("Initializing BotHandlers.")
@@ -76,6 +77,7 @@ class BotHandlers:
             form.responses = responses
             self.user_forms[user_id] = form
             self._save_user_state(user_id, lang, form.current_question_index, form.responses, chat_id)
+            await query.edit_message_text(text=self.localization.get_string(lang, "start_questionnaire"))
             await self._send_next_question(user_id)
         else:
             logger.info(f"User {user_id} declined privacy policy.")

@@ -50,15 +50,16 @@ class GoogleSheets:
             self.main_sheet.append_row(row)
         self._retry_on_failure(append_row)
 
-    def save_user_state(self, user_id: str, lang: str, current_question_index: int, responses: list, chat_id: str):
-        logger.info(f"save_user_state: user_id={user_id}, lang={lang}, cqi={current_question_index}, chat_id={chat_id}, responses={responses}")
+    def save_user_state(self, user_id: str, lang: str, current_question_index: int, responses: dict, chat_id: str,
+                        last_question=None):
         def save_state():
             responses_json = json.dumps(responses)
-            new_row = [str(user_id), str(chat_id), lang, str(current_question_index), responses_json]
+            new_row = [str(user_id), str(chat_id), lang, str(current_question_index), responses_json,
+                       last_question or ""]
             records = self.metadata_sheet.get_all_records()
             for i, record in enumerate(records):
                 if str(record.get('User ID', '')) == str(user_id):
-                    self.metadata_sheet.update(f"A{i + 2}:E{i + 2}", [new_row])
+                    self.metadata_sheet.update(f"A{i + 2}:F{i + 2}", [new_row])
                     return
             self.metadata_sheet.append_row(new_row)
         self._retry_on_failure(save_state)
