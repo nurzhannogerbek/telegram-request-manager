@@ -1,47 +1,38 @@
-import os
 import json
 import asyncio
 from telegram import Update
-from shared.telegram_bot.main import TelegramBot
+from shared.telegram_bot.bootstrap import Bootstrap
+from shared.telegram_bot.logger import logger
+
+global_telegram_bot = Bootstrap.get_telegram_bot()
 
 async def async_lambda_handler(event):
-    """
-    Asynchronous entry point for handling Telegram updates in AWS Lambda.
-    :param event: The event data passed by the Lambda trigger.
-    """
-    # Initialize bot instance inside the handler to avoid shared states between invocations.
-    token = os.getenv("TELEGRAM_BOT_TOKEN")
-    if not token:
-        raise EnvironmentError("TELEGRAM_BOT_TOKEN environment variable is not set.")
-    bot = TelegramBot(token)
-
     try:
-        # Parse the incoming event as a Telegram update.
         update_data = json.loads(event["body"])
-        update = Update.de_json(update_data, bot.application.bot)
-
-        # Initialize and process the update.
-        await bot.application.initialize()
-        await bot.application.process_update(update)
-
-        # Return HTTP 200 (success response) to Telegram.
+        update = Update.de_json(update_data, global_telegram_bot.application.bot)
+        await global_telegram_bot.application.process_update(update)
         return {
             "statusCode": 200,
             "body": json.dumps({"message": "Update processed successfully."})
         }
-
-    except Exception as e:
-        # Log the error for debugging purposes.
-        print(f"Error processing Telegram update: {e}")
-
-        # Respond with HTTP 200 to prevent retries from Telegram.
+    except json.JSONDecodeError as e:
+        logger.error(f"JSON decoding error: {e}. Event: {event}")
         return {
             "statusCode": 200,
-            "body": json.dumps({"message": "Error occurred, but acknowledged to prevent retries."})
+            "body": json.dumps({"message": "Invalid JSON payload."})
+        }
+    except KeyError as e:
+        logger.error(f"KeyError: {e}. Event: {event}")
+        return {
+            "statusCode": 200,
+            "body": json.dumps({"message": "Missing required data in the request."})
+        }
+    except Exception as e:
+        logger.error(f"Unexpected error processing event: {event}. Error: {e}", exc_info=True)
+        return {
+            "statusCode": 200,
+            "body": json.dumps({"message": "Internal server error occurred."})
         }
 
 def lambda_handler(event, context):
-    """
-    Synchronous entry point for AWS Lambda, runs the asynchronous handler.
-    """
     return asyncio.run(async_lambda_handler(event))

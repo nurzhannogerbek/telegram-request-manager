@@ -1,135 +1,67 @@
-import os
 import json
-import gspread
-import logging
+from gspread import Client, exceptions
+from shared.telegram_bot.config import Config
+from shared.telegram_bot.logger import logger
 from google.oauth2.service_account import Credentials
 
-# Configure logging to track Google Sheets interactions and errors.
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+CREDENTIALS = None
+SHEET_CLIENT = None
+MAIN_SHEET = None
+METADATA_SHEET = None
+
+
+def get_google_sheets_connection(force_refresh=False):
+    global CREDENTIALS, SHEET_CLIENT, MAIN_SHEET, METADATA_SHEET
+    if force_refresh or not CREDENTIALS or not SHEET_CLIENT:
+        logger.info("Initializing or refreshing Google Sheets connection...")
+        CREDENTIALS = Credentials.from_service_account_info(
+            Config.SERVICE_ACCOUNT_INFO, scopes=["https://www.googleapis.com/auth/spreadsheets"]
+        )
+        SHEET_CLIENT = Client(auth=CREDENTIALS)
+    if force_refresh or not MAIN_SHEET or not METADATA_SHEET:
+        google_sheet = SHEET_CLIENT.open_by_key(Config.GOOGLE_SHEET_ID)
+        MAIN_SHEET = google_sheet.sheet1
+        METADATA_SHEET = google_sheet.worksheet("Metadata")
+    return MAIN_SHEET, METADATA_SHEET
+
 
 class GoogleSheets:
-    """
-    Class to manage Google Sheets interactions and save user responses.
-    """
-
     def __init__(self):
-        """
-        Initializes the Google Sheets client using environment variables for the service account credentials.
-        Includes debug logging to verify the correct loading of environment variables.
-        """
-        # Collect service account information from environment variables.
-        service_account_info = {
-            "type": os.getenv("SERVICE_ACCOUNT_TYPE"),
-            "project_id": os.getenv("SERVICE_ACCOUNT_PROJECT_ID"),
-            "private_key_id": os.getenv("SERVICE_ACCOUNT_PRIVATE_KEY_ID"),
-            "private_key": os.getenv("SERVICE_ACCOUNT_PRIVATE_KEY").replace("\\n", "\n"),
-            "client_email": os.getenv("SERVICE_ACCOUNT_CLIENT_EMAIL"),
-            "client_id": os.getenv("SERVICE_ACCOUNT_CLIENT_ID"),
-            "auth_uri": os.getenv("SERVICE_ACCOUNT_AUTH_URI"),
-            "token_uri": os.getenv("SERVICE_ACCOUNT_TOKEN_URI"),
-            "auth_provider_x509_cert_url": os.getenv("SERVICE_ACCOUNT_AUTH_PROVIDER_CERT_URL"),
-            "client_x509_cert_url": os.getenv("SERVICE_ACCOUNT_CLIENT_CERT_URL"),
-        }
+        self.main_sheet, self.metadata_sheet = get_google_sheets_connection()
 
-        # Debug: Log the first 10 characters of sensitive environment variables to ensure correct loading.
-        print(f"Debug: SERVICE_ACCOUNT_PRIVATE_KEY starts with: {service_account_info['private_key'][:10]}...")
-        print(f"Debug: SERVICE_ACCOUNT_CLIENT_EMAIL: {service_account_info['client_email'][:5]}...")
-        print(f"Debug: SERVICE_ACCOUNT_PROJECT_ID: {service_account_info['project_id']}")
-
-        # Specify required scopes for Google Sheets API.
-        scopes = ["https://www.googleapis.com/auth/spreadsheets"]
-
-        # Authenticate using the service account credentials and required scopes.
-        credentials = Credentials.from_service_account_info(service_account_info, scopes=scopes)
-        self.client = gspread.authorize(credentials)
-
-        # Retrieve the Google Sheet.
-        sheet_id = os.getenv("GOOGLE_SHEET_ID")
-        if not sheet_id:
-            logger.error("Environment variable GOOGLE_SHEET_ID is not set.")
-            raise EnvironmentError("GOOGLE_SHEET_ID environment variable is not set.")
-        self.sheet = self.client.open_by_key(sheet_id).sheet1
-
-        # Log successful connection.
-        print("Successfully connected to Google Sheets.")
+    def _retry_on_failure(self, func, *args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except exceptions.APIError as e:
+            logger.error(f"Google Sheets API error: {e}, retrying with refreshed connection...", exc_info=True)
+            self.main_sheet, self.metadata_sheet = get_google_sheets_connection(force_refresh=True)
+            return func(*args, **kwargs)
+        except Exception as e:
+            logger.error(f"Unexpected error while accessing Google Sheets: {e}", exc_info=True)
+            raise
 
     def save_to_sheet(self, user_id, responses):
-        """
-        Saves user responses to the "Telegram Users" sheet.
-
-        :param user_id: Telegram user ID as a string.
-        :param responses: Dictionary of user responses with questions as keys and answers as values.
-        """
-        try:
-            # Define the column order based on the sheet headers.
+        def append_row():
             column_order = ["User ID", "Full Name", "Age", "Email", "Phone", "Purpose"]
-
-            # Map responses to the correct column order.
-            row = [str(user_id)]  # The first column is always the user ID.
-
-            # Fill the row with answers based on the order of the columns.
-            for column in column_order[1:]:
-                # Match the question text with the response in the dictionary.
-                response = responses.get(column, "")  # Return an empty string if no response is found.
-                row.append(response)
-
-            # Append the row to the "Telegram Users" sheet.
-            self.sheet.append_row(row)
-
-        except Exception as e:
-            print(f"Error saving to Google Sheets for user {user_id}: {e}.")
-
-    @staticmethod
-    def _validate_service_account_info(service_account_info):
-        """
-        Validates that the service account information contains all required fields.
-
-        :param service_account_info: Dictionary containing service account information.
-        :raises ValueError: If any required field is missing.
-        """
-        required_keys = [
-            "type", "project_id", "private_key_id", "private_key", "client_email",
-            "client_id", "auth_uri", "token_uri",
-            "auth_provider_x509_cert_url", "client_x509_cert_url"
-        ]
-
-        # Check that each required key is present and non-empty.
-        for key in required_keys:
-            if not service_account_info.get(key):
-                # Log the missing field.
-                logger.error(f"Missing required service account field: {key}.")
-                raise ValueError(f"Missing required service account field: {key}.")
-        # Log successful validation.
-        print("Service account credentials validated successfully.")
+            row = [str(user_id)] + [responses.get(column, "") for column in column_order[1:]]
+            self.main_sheet.append_row(row)
+        self._retry_on_failure(append_row)
 
     def save_user_state(self, user_id: str, lang: str, current_question_index: int, responses: dict, chat_id: str):
-        """
-        Optimized method for saving user state to the Metadata sheet.
-        """
-        try:
-            user_states_sheet = self.client.open_by_key(os.getenv("GOOGLE_SHEET_ID")).worksheet("Metadata")
+        def save_state():
             responses_json = json.dumps(responses)
             new_row = [str(user_id), str(chat_id), lang, str(current_question_index), responses_json]
-            records = user_states_sheet.get_all_records()
+            records = self.metadata_sheet.get_all_records()
             for i, record in enumerate(records):
                 if str(record.get('User ID', '')) == str(user_id):
-                    user_states_sheet.update(f"A{i + 2}:E{i + 2}", [new_row])  # type: ignore
-                    print(f"Updated state for user {user_id}.")
+                    self.metadata_sheet.update(f"A{i + 2}:E{i + 2}", [new_row])
                     return
-            user_states_sheet.append_row(new_row)
-            print(f"Saved new state for user {user_id}.")
-
-        except Exception as e:
-            print(f"Error saving user state for {user_id}: {e}")
+            self.metadata_sheet.append_row(new_row)
+        self._retry_on_failure(save_state)
 
     def get_user_state(self, user_id):
-        """
-        Retrieves the saved state (language, question index, responses, and Chat ID) for a given user.
-        """
-        try:
-            user_states_sheet = self.client.open_by_key(os.getenv("GOOGLE_SHEET_ID")).worksheet("Metadata")
-            records = user_states_sheet.get_all_records()
+        def fetch_state():
+            records = self.metadata_sheet.get_all_records()
             for record in records:
                 if str(record['User ID']) == str(user_id):
                     lang = record['Language']
@@ -137,25 +69,14 @@ class GoogleSheets:
                     responses = json.loads(record['Responses']) if record['Responses'] else {}
                     chat_id = record.get('Chat ID', "")
                     return lang, current_question_index, responses, chat_id
-        except Exception as e:
-            print(f"Error retrieving user state for {user_id}: {e}")
-        return None, 0, {}, ""
+            return None, 0, {}, ""
+        return self._retry_on_failure(fetch_state)
 
     def get_chat_id(self, user_id):
-        """
-        Retrieves the saved chat ID for a given user from the Metadata sheet.
-
-        :param user_id: The unique Telegram user ID.
-        :return: The chat ID as a string or an empty string if not found.
-        """
-        try:
-            user_states_sheet = self.client.open_by_key(os.getenv("GOOGLE_SHEET_ID")).worksheet("Metadata")
-            records = user_states_sheet.get_all_records()
-
+        def fetch_chat_id():
+            records = self.metadata_sheet.get_all_records()
             for record in records:
                 if str(record['User ID']) == str(user_id):
                     return record.get('Chat ID', "")
-        except Exception as e:
-            print(f"Error retrieving chat ID for user {user_id}: {e}")
-        return ""
-
+            return ""
+        return self._retry_on_failure(fetch_chat_id)
