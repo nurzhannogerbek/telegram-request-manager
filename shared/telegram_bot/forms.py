@@ -1,11 +1,15 @@
+from shared.telegram_bot.logger import logger
+
 class ApplicationForm:
     _cached_questions = {}
 
     def __init__(self, lang, localization):
+        logger.info(f"Creating ApplicationForm for lang={lang}")
         self.lang = lang
         self.responses = []
         self.current_question_index = 0
         if lang not in ApplicationForm._cached_questions:
+            logger.info(f"Questions not cached for lang={lang}, fetching from localization.")
             ApplicationForm._cached_questions[lang] = localization.get_questions(lang)
         self.questions = ApplicationForm._cached_questions[lang]
         self.response_mapping = {
