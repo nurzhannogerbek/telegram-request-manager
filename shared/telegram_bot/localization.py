@@ -1,4 +1,9 @@
 class Localization:
+    """
+    Manages localized strings and questions for the Telegram bot in multiple languages.
+    Provides utility methods to retrieve strings and questions based on the selected language.
+    """
+    # Dictionary containing localized strings in different languages.
     STRINGS = {
         "ru": {
             "privacy_accept": "Согласен",
@@ -55,6 +60,8 @@ class Localization:
             "invalid_age": "Please enter a valid age (between 1 and 120)."
         }
     }
+
+    # Dictionary containing the questions for different languages.
     QUESTIONS = {
         "ru": [
             {"question": "Ваше полное имя?", "type": "text"},
@@ -78,6 +85,8 @@ class Localization:
             {"question": "What is your purpose for joining the group?", "type": "text"}
         ]
     }
+
+    # Welcome message that includes greetings in multiple languages.
     WELCOME_MESSAGE_MULTILANG = (
         "Welcome! Қош келдіңіз! Добро пожаловать!\n\n"
         "To continue, please choose a language:\n"
@@ -87,12 +96,37 @@ class Localization:
 
     @staticmethod
     def get_string(lang, key):
+        """
+        Retrieves a localized string based on the language and key.
+
+        Args:
+            lang (str): The language code (e.g., 'en', 'ru', 'kz').
+            key (str): The key representing the string to retrieve.
+
+        Returns:
+            str: The localized string if found, otherwise the key itself.
+        """
         return Localization.STRINGS.get(lang, Localization.STRINGS["en"]).get(key, key)
 
     @staticmethod
     def get_multilang_welcome_message():
+        """
+        Retrieves the multilingual welcome message.
+
+        Returns:
+            str: The welcome message containing greetings in multiple languages.
+        """
         return Localization.WELCOME_MESSAGE_MULTILANG
 
     @staticmethod
     def get_questions(lang):
+        """
+        Retrieves the list of questions for the specified language.
+
+        Args:
+            lang (str): The language code (e.g., 'en', 'ru', 'kz').
+
+        Returns:
+            list: A list of dictionaries, each containing a question and its type.
+        """
         return Localization.QUESTIONS.get(lang, Localization.QUESTIONS["en"])

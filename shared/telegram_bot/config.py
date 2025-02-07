@@ -1,18 +1,28 @@
 import os
 
 class Config:
+    """
+    Configuration class for managing environment variables and other configuration settings.
+    This class retrieves critical values such as API tokens, admin chat IDs, and Google Sheets information.
+    If any required variable is missing, an error is raised to prevent misconfiguration.
+    """
+
+    # Retrieve the Telegram bot token from the environment variables.
     TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
     if not TELEGRAM_BOT_TOKEN:
         raise EnvironmentError("TELEGRAM_BOT_TOKEN environment variable is not set.")
 
+    # Retrieve the admin chat ID for sending critical notifications.
     ADMIN_CHAT_ID = os.getenv("ADMIN_CHAT_ID")
     if not ADMIN_CHAT_ID:
         raise EnvironmentError("ADMIN_CHAT_ID environment variable is not set.")
 
+    # Retrieve the Google Sheets document ID to store user responses and metadata.
     GOOGLE_SHEET_ID = os.getenv("GOOGLE_SHEET_ID")
     if not GOOGLE_SHEET_ID:
         raise EnvironmentError("GOOGLE_SHEET_ID environment variable is not set.")
 
+    # Retrieve Google service account credentials from environment variables to authenticate with Google APIs.
     SERVICE_ACCOUNT_INFO = {
         "type": os.getenv("SERVICE_ACCOUNT_TYPE"),
         "project_id": os.getenv("SERVICE_ACCOUNT_PROJECT_ID"),
@@ -26,6 +36,7 @@ class Config:
         "client_x509_cert_url": os.getenv("SERVICE_ACCOUNT_CLIENT_CERT_URL"),
     }
 
+    # Retrieve URLs for the privacy policy in different languages.
     PRIVACY_POLICY_URLS = {
         "ru": os.getenv("PRIVACY_POLICY_URL_RU"),
         "kz": os.getenv("PRIVACY_POLICY_URL_KZ"),
@@ -34,4 +45,14 @@ class Config:
 
     @staticmethod
     def get_privacy_policy_url(lang):
+        """
+        Retrieves the privacy policy URL for the specified language.
+        If the specified language is not found, the default English URL is returned.
+
+        Args:
+            lang (str): The language code (e.g., 'ru', 'kz', 'en').
+
+        Returns:
+            str: The URL of the privacy policy corresponding to the specified language.
+        """
         return Config.PRIVACY_POLICY_URLS.get(lang, Config.PRIVACY_POLICY_URLS["en"])
