@@ -110,9 +110,7 @@ class BotHandlers:
         if form.is_complete():
             logger.info(f"Form completed for user {user_id}, saving responses.")
             self.google_sheets.save_to_sheet(user_id, form.get_all_responses())
-            fifth_question_response = form.get_all_responses().get("Purpose", "")
-            logger.info(f"Saving fifth question response for user {user_id}: {fifth_question_response}")
-            self.google_sheets.save_fifth_question(user_id, fifth_question_response)
+            self._save_user_state(user_id, form.lang, form.current_question_index, form.responses, self.google_sheets.get_chat_id(user_id))
             del self.user_forms[user_id]
             await update.message.reply_text(self.localization.get_string(form.lang, "application_complete"))
             await self.approve_join_request(user_id, context)
