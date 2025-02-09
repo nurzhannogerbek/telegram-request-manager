@@ -8,90 +8,112 @@ class Localization:
         "ru": {
             "privacy_accept": "Согласен",
             "privacy_decline": "Не согласен",
-            "privacy_prompt": "Для продолжения прочтите и примите политику конфиденциальности.",
-            "start_questionnaire": "Пожалуйста, ответьте на вопросы.",
-            "decline_message": "Вы отказались от условий. Диалог завершён.",
-            "choose_language": "Для продолжения выберите язык:",
-            "application_complete": "Спасибо! Ваша заявка принята.",
-            "fill_missing_data": "Вы не предоставили все необходимые данные. Ваша заявка отклонена.",
-            "error_message": "Произошла ошибка. Пожалуйста, попробуйте позже.",
-            "privacy_policy_request": "Ознакомьтесь с нашей политикой конфиденциальности.",
-            "form_reminder": "Напоминаем, что вы не закончили заполнение анкеты. Пожалуйста, завершите её, чтобы получить доступ к группе.",
+            "privacy_prompt": "Чтобы продолжить, пожалуйста, ознакомьтесь с политикой конфиденциальности. В ней описано, как мы обрабатываем и защищаем ваши данные.",
+            "start_questionnaire": "Чтобы мы могли лучше вас узнать, пожалуйста, ответьте на несколько вопросов.",
+            "decline_message": "Вы решили не принимать условия в данный момент. Если передумаете, мы будем здесь!",
+            "choose_language": "Чтобы продолжить, выберите предпочитаемый язык:",
+            "application_complete": "Спасибо, что ответили на наши вопросы! Ваша заявка принята, рады приветствовать вас в сообществе.",
+            "fill_missing_data": "Кажется, вы не предоставили всю необходимую информацию. Ваша заявка отклонена, но вы можете снова подать заявку на вступление в группу, когда будете готовы.",
+            "error_message": "Ой, что-то пошло не так. Пожалуйста, попробуйте позже или обратитесь в поддержку.",
+            "privacy_policy_request": "Пожалуйста, выделите минутку, чтобы ознакомиться с нашей политикой конфиденциальности, где описано, как мы обрабатываем ваши данные.",
+            "form_reminder": "Мы заметили, что вы ещё не закончили заполнение анкеты. Пожалуйста, ответьте на все вопросы, чтобы получить доступ в группу.",
             "show_more": "Показать полностью",
             "privacy_policy_link_text": "Нажмите здесь, чтобы ознакомиться с политикой конфиденциальности.",
-            "invalid_email": "Пожалуйста, введите корректный адрес электронной почты.",
-            "invalid_phone": "Пожалуйста, введите корректный номер телефона.",
-            "invalid_age": "Пожалуйста, введите корректный возраст (от 1 до 120)."
+            "invalid_email": "Похоже, это неправильный формат адреса электронной почты. Пожалуйста, введите адрес вида 'name@example.com'.",
+            "invalid_phone": "Пожалуйста, введите действительный номер телефона в формате +XXXXXXXX..., включая код страны.",
+            "invalid_age": "Укажите корректный возраст от 1 до 120 лет.",
+            "press_button": "Пожалуйста, нажмите кнопку на экране."
         },
         "kz": {
             "privacy_accept": "Қабылдаймын",
             "privacy_decline": "Қабылдамаймын",
-            "privacy_prompt": "Жалғастыру үшін құпиялылық саясатын оқып, келісіңіз.",
-            "start_questionnaire": "Сұрақтарға жауап беріңіз.",
-            "decline_message": "Сіз шарттарды қабылдамадыңыз. Диалог аяқталды.",
-            "choose_language": "Жалғастыру үшін тілді таңдаңыз:",
-            "application_complete": "Рақмет! Сіздің өтініміңіз қабылданды.",
-            "fill_missing_data": "Сіз барлық қажетті деректерді бермедіңіз. Сіздің өтініміңіз қабылданбады.",
-            "error_message": "Қате орын алды. Кейінірек қайталап көріңіз.",
-            "privacy_policy_request": "Құпиялылық саясатымен танысыңыз.",
-            "form_reminder": "Сіз анкетаны толтырып бітірген жоқсыз. Топқа кіру үшін анкетаны аяқтаңыз.",
+            "privacy_prompt": "Жалғастыру үшін біздің құпиялылық саясатымен танысып шығыңыз. Онда деректеріңіздің қалай сақталатыны және қорғалатыны туралы жазылған.",
+            "start_questionnaire": "Біз сізді жақынырақ танып білу үшін бірнеше сұраққа жауап беріңіз.",
+            "decline_message": "Сіз осы сәтте шарттарды қабылдамадыңыз. Ойыңызды өзгертсеңіз, біз әрдайым осындамыз!",
+            "choose_language": "Жалғастыру үшін өзіңізге ыңғайлы тілді таңдаңыз:",
+            "application_complete": "Сұрақтарға уақыт бөліп жауап бергеніңізге рақмет! Сіздің өтініміңіз қабылданды, қауымдастыққа қош келдіңіз.",
+            "fill_missing_data": "Сіз барлық қажетті ақпаратты бермеген сияқтысыз. Өтініміңіз қабылданбады, бірақ дайын болған кезіңізде қайта өтінім бере аласыз.",
+            "error_message": "Упс, бірдеңе қате кетті. Кейінірек қайталап көріңіз немесе қолдау қызметіне хабарласыңыз.",
+            "privacy_policy_request": "Жеке мәліметтеріңізді қалай өңдейтініміз жайлы толығырақ білу үшін құпиялылық саясатымен танысып шығыңыз.",
+            "form_reminder": "Әлі анкетаны толық аяқтамаған сияқтысыз. Топқа кіру үшін барлық сұрақтарға жауап беріңіз.",
             "show_more": "Толығырақ көрсету",
-            "privacy_policy_link_text": "Құпиялылық саясатына сілтемені қарау үшін мұнда басыңыз.",
-            "invalid_email": "Дұрыс электрондық пошта мекенжайын енгізіңіз.",
-            "invalid_phone": "Дұрыс телефон нөмірін енгізіңіз.",
-            "invalid_age": "Дұрыс жасты енгізіңіз (1-ден 120-ға дейін)."
+            "privacy_policy_link_text": "Құпиялылық саясатына сілтемені көру үшін мұнда басыңыз.",
+            "invalid_email": "Бұл электрондық пошта мекенжайы дұрыс форматқа сай емес. Мысалы: 'name@example.com'.",
+            "invalid_phone": "Телефон нөміріңізді + белгісімен және цифрлармен (ел коды) енгізіңіз. Мысалы, +77001234567.",
+            "invalid_age": "Жасыңызды 1 мен 120 аралығында дұрыс енгізіңіз.",
+            "press_button": "Түймені басыңыз."
         },
         "en": {
             "privacy_accept": "Agree",
             "privacy_decline": "Disagree",
-            "privacy_prompt": "To continue, please read and accept the privacy policy.",
-            "start_questionnaire": "Please answer the questions.",
-            "decline_message": "You have declined the terms. The dialog is closed.",
-            "choose_language": "To continue, please choose a language:",
-            "application_complete": "Thank you! Your application has been accepted.",
-            "fill_missing_data": "You did not provide all the required data. Your application has been declined.",
-            "error_message": "An error occurred. Please try again later.",
-            "privacy_policy_request": "Please review our privacy policy.",
-            "form_reminder": "Reminder: You have not completed the form. Please finish it to gain access to the group.",
+            "privacy_prompt": "To continue, please read and accept our privacy policy. It explains how we handle and protect your data.",
+            "start_questionnaire": "Please help us get to know you better by answering a few short questions.",
+            "decline_message": "You've chosen not to accept the terms at this time. We're here if you change your mind!",
+            "choose_language": "To continue, please choose your preferred language:",
+            "application_complete": "Thank you for taking the time to answer our questions! Your application has been accepted — welcome to the community.",
+            "fill_missing_data": "It looks like you didn't provide all the required information. Your application has been declined, but you can apply again when you're ready.",
+            "error_message": "Oops, something went wrong. Please try again later or contact support.",
+            "privacy_policy_request": "Please take a moment to review our privacy policy, which explains how we handle your data.",
+            "form_reminder": "We noticed you haven't finished filling out the form. Please answer all the questions to gain access to the group.",
             "show_more": "Show more",
             "privacy_policy_link_text": "Click here to view the Privacy Policy.",
-            "invalid_email": "Please enter a valid email address.",
-            "invalid_phone": "Please enter a valid phone number.",
-            "invalid_age": "Please enter a valid age (between 1 and 120)."
+            "invalid_email": "That doesn't look like a valid email address. Please use a format like 'name@example.com'.",
+            "invalid_phone": "Please enter a valid phone number in the format +XXXXXXXX..., including your country code if necessary.",
+            "invalid_age": "Please enter a valid age between 1 and 120.",
+            "press_button": "Please press the button on the screen."
         }
     }
 
-    # Dictionary containing the questions for different languages.
     QUESTIONS = {
         "ru": [
-            {"question": "Ваше полное имя?", "type": "text"},
-            {"question": "Ваш возраст?", "type": "age"},
-            {"question": "Ваш email?", "type": "email"},
-            {"question": "Ваш номер телефона?", "type": "phone"},
-            {"question": "Цель вступления в группу?", "type": "text"}
+            {"question": "Как мы можем к вам обращаться? Введите, пожалуйста, ваше полное имя.", "type": "text"},
+            {"question": "Сколько вам лет?", "type": "age"},
+            {"question": "Укажите ваш адрес электронной почты (например: name@example.com).", "type": "email"},
+            {"question": "Какой у вас номер телефона? Пожалуйста, укажите его в формате +XXXXXXXX....", "type": "phone"},
+            {"question": "Расскажите, зачем вы хотите присоединиться к нашей группе?", "type": "text"},
+            {"question": "Какой у вас род деятельности?", "type": "text"},
+            {"question": "Какое у вас место работы?", "type": "text"},
+            {"question": "В каком городе вы проживаете?", "type": "text"}
         ],
         "kz": [
-            {"question": "Сіздің толық атыңыз?", "type": "text"},
-            {"question": "Сіздің жасыңыз?", "type": "age"},
-            {"question": "Сіздің email?", "type": "email"},
-            {"question": "Сіздің телефон нөміріңіз?", "type": "phone"},
-            {"question": "Топқа кіру мақсатыңыз қандай?", "type": "text"}
+            {"question": "Сізге қалай жүгінуге болады? Толық атыңызды енгізіңіз, өтінеміз.", "type": "text"},
+            {"question": "Жасыңыз қаншада?", "type": "age"},
+            {"question": "Электрондық пошта мекенжайыңызды көрсетіңіз (мысалы: name@example.com).", "type": "email"},
+            {"question": "Телефон нөміріңіз қандай? Оны +XXXXXXXX... форматында енгізіңіз, өтінеміз.", "type": "phone"},
+            {"question": "Біздің топқа не үшін қосылғыңыз келеді?", "type": "text"},
+            {"question": "Сіздің қызметіңіз қандай?", "type": "text"},
+            {"question": "Сіз қай жерде жұмыс істейсіз?", "type": "text"},
+            {"question": "Сіз қай қалада тұрасыз?", "type": "text"}
         ],
         "en": [
-            {"question": "What is your full name?", "type": "text"},
+            {"question": "How should we address you? Please enter your full name.", "type": "text"},
             {"question": "How old are you?", "type": "age"},
-            {"question": "What is your email?", "type": "email"},
-            {"question": "What is your phone number?", "type": "phone"},
-            {"question": "What is your purpose for joining the group?", "type": "text"}
+            {"question": "Please provide your email address (e.g., name@example.com).", "type": "email"},
+            {"question": "What is your phone number? Please enter it in the format +XXXXXXXX....", "type": "phone"},
+            {"question": "Please tell us why you want to join our group.", "type": "text"},
+            {"question": "What is your occupation?", "type": "text"},
+            {"question": "Where do you work?", "type": "text"},
+            {"question": "In which city do you live?", "type": "text"}
         ]
     }
 
-    # Welcome message that includes greetings in multiple languages.
     WELCOME_MESSAGE_MULTILANG = (
         "Welcome! Қош келдіңіз! Добро пожаловать!\n\n"
+        "You have applied to join the Qazaq IT Community. Thank you for your interest! "
+        "To proceed with membership, please fill out a short questionnaire.\n\n"
+        "Сіз Qazaq IT Community тобына қосылуға өтінім қалдырдыңыз. Біз сізге ризамыз! "
+        "Топқа кіруді жалғастыру үшін қысқа анкетаны толтырыңыз.\n\n"
+        "Вы подали заявку на вступление в группу Qazaq IT Community. Благодарим вас за интерес! "
+        "Чтобы продолжить вступление, пожалуйста, заполните короткую анкету.\n\n"
         "To continue, please choose a language:\n"
         "Жалғастыру үшін тілді таңдаңыз:\n"
         "Для продолжения выберите язык:"
+    )
+
+    PRESS_BUTTON_MULTILANG = (
+        "Пожалуйста, нажмите одну из кнопок.\n"
+        "Түймені басыңыз.\n"
+        "Please press one of the buttons."
     )
 
     @staticmethod

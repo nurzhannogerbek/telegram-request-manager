@@ -88,6 +88,9 @@ The bot uses Google Sheets to store user responses and metadata, enabling easy a
      - `Email`: User's email address.
      - `Phone`: User's phone number.
      - `Purpose`: Purpose for joining the group.
+     - `Occupation`: The user's occupation or professional activity.
+     - `Workplace`: The user's place of work or organization.
+     - `City`: The city where the user resides.
 
 2. *Metadata Sheet*
    - Tracks the current progress and state of each user.
@@ -97,7 +100,6 @@ The bot uses Google Sheets to store user responses and metadata, enabling easy a
      - `Language`: Language preference of the user.
      - `Current Question Index`: Index of the current question in the questionnaire. 
      - `Responses`: JSON representation of responses.
-     - `Last Question`: Text of the last question sent to the user.
 
 ## Environment Variables
 

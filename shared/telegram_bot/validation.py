@@ -9,7 +9,7 @@ class Validation:
     # Regular expression pattern to validate email addresses.
     EMAIL_PATTERN = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
     # Regular expression pattern to validate phone numbers (allows optional '+' and digits).
-    PHONE_PATTERN = re.compile(r"^\+?\d{10,15}$")
+    PHONE_PATTERN = re.compile(r"^\+\d{10,15}$")
     # Maximum allowable length for email addresses.
     MAX_EMAIL_LENGTH = 320
     # Maximum allowable length for phone numbers.

@@ -35,21 +35,30 @@ class ApplicationForm:
 
         # Map the questions to internal response fields.
         self.response_mapping = {
-            "Ваше полное имя?": "Full Name",
-            "Сіздің толық атыңыз?": "Full Name",
-            "What is your full name?": "Full Name",
-            "Ваш возраст?": "Age",
-            "Сіздің жасыңыз?": "Age",
+            "Как мы можем к вам обращаться? Введите, пожалуйста, ваше полное имя.": "Full Name",
+            "Сколько вам лет?": "Age",
+            "Укажите ваш адрес электронной почты (например: name@example.com).": "Email",
+            "Какой у вас номер телефона? Пожалуйста, укажите его в формате +XXXXXXXX....": "Phone",
+            "Расскажите, зачем вы хотите присоединиться к нашей группе?": "Purpose",
+            "Какой у вас род деятельности?": "Occupation",
+            "Какое у вас место работы?": "Workplace",
+            "В каком городе вы проживаете?": "City",
+            "Сізге қалай жүгінуге болады? Толық атыңызды енгізіңіз, өтінеміз.": "Full Name",
+            "Жасыңыз қаншада?": "Age",
+            "Электрондық пошта мекенжайыңызды көрсетіңіз (мысалы: name@example.com).": "Email",
+            "Телефон нөміріңіз қандай? Оны +XXXXXXXX... форматында енгізіңіз, өтінеміз.": "Phone",
+            "Біздің топқа не үшін қосылғыңыз келеді?": "Purpose",
+            "Сіздің қызметіңіз қандай?": "Occupation",
+            "Сіз қай жерде жұмыс істейсіз?": "Workplace",
+            "Сіз қай қалада тұрасыз?": "City",
+            "How should we address you? Please enter your full name.": "Full Name",
             "How old are you?": "Age",
-            "Ваш email?": "Email",
-            "Сіздің email?": "Email",
-            "What is your email?": "Email",
-            "Ваш номер телефона?": "Phone",
-            "Сіздің телефон нөміріңіз?": "Phone",
-            "What is your phone number?": "Phone",
-            "Цель вступления в группу?": "Purpose",
-            "Топқа кіру мақсатыңыз қандай?": "Purpose",
-            "What is your purpose for joining the group?": "Purpose"
+            "Please provide your email address (e.g., name@example.com).": "Email",
+            "What is your phone number? Please enter it in the format +XXXXXXXX....": "Phone",
+            "Please tell us why you want to join our group.": "Purpose",
+            "What is your occupation?": "Occupation",
+            "Where do you work?": "Workplace",
+            "In which city do you live?": "City"
         }
 
     def get_next_question(self):

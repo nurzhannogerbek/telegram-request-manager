@@ -95,7 +95,17 @@ class GoogleSheets:
 
         def append_row():
             # Define the order of columns where responses will be stored.
-            column_order = ["User ID", "Full Name", "Age", "Email", "Phone", "Purpose"]
+            column_order = [
+                "User ID",
+                "Full Name",
+                "Age",
+                "Email",
+                "Phone",
+                "Purpose",
+                "Occupation",
+                "Workplace",
+                "City"
+            ]
             # Create a new row with the user's ID and their responses, ensuring fields match the column order.
             row = [str(user_id)] + [responses.get(column, "") for column in column_order[1:]]
             # Append the row to the main sheet.

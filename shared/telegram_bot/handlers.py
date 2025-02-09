@@ -58,7 +58,7 @@ class BotHandlers:
         context.user_data["lang"] = lang
         chat_id = self.google_sheets.get_chat_id(user_id)
         # Save the user's state with the selected language.
-        self._save_user_state(user_id, lang, 0, [], chat_id)
+        self._save_user_state(user_id, lang, -1, [], chat_id)
         await self.send_privacy_policy(update, context)
 
     async def send_privacy_policy(self, update, context):
@@ -75,17 +75,23 @@ class BotHandlers:
         message_text = f"{self.localization.get_string(lang, 'privacy_prompt')}\n\n{privacy_policy_link}"
         keyboard = [[
             InlineKeyboardButton(self.localization.get_string(lang, "privacy_accept"), callback_data="privacy_accept"),
-            InlineKeyboardButton(self.localization.get_string(lang, "privacy_decline"), callback_data="privacy_decline")
+            # InlineKeyboardButton(self.localization.get_string(lang, "privacy_decline"), callback_data="privacy_decline")
         ]]
         if update.callback_query:
             # Edit the existing message to include the privacy policy.
-            await update.callback_query.edit_message_text(text=message_text,
-                                                          reply_markup=InlineKeyboardMarkup(keyboard),
-                                                          parse_mode="Markdown")
+            await update.callback_query.edit_message_text(
+                text=message_text,
+                reply_markup=InlineKeyboardMarkup(keyboard),
+                parse_mode="Markdown"
+            )
         else:
             # Send a new message with the privacy policy.
-            await self.bot.send_message(chat_id=user_id, text=message_text,
-                                        reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown")
+            await self.bot.send_message(
+                chat_id=user_id,
+                text=message_text,
+                reply_markup=InlineKeyboardMarkup(keyboard),
+                parse_mode="Markdown"
+            )
 
     async def handle_privacy_response(self, update, context):
         """
@@ -105,7 +111,7 @@ class BotHandlers:
         if query.data == "privacy_accept":
             # Start the questionnaire if the user accepts the privacy policy.
             form = ApplicationForm(lang, self.localization)
-            form.current_question_index = current_question_index
+            form.current_question_index = 0
             form.responses = responses
             self.user_forms[user_id] = form
             self._save_user_state(user_id, lang, form.current_question_index, form.responses, chat_id)
@@ -113,44 +119,77 @@ class BotHandlers:
             await self._send_next_question(user_id)
         else:
             # Inform the user that the interaction has ended if they decline the privacy policy.
-            await query.edit_message_text(text=self.localization.get_string(lang, "decline_message"))
+            # await query.edit_message_text(text=self.localization.get_string(lang, "decline_message"))
+            pass
 
     async def handle_response(self, update, context):
         """
-        Handles user responses to questions and validates them before proceeding.
+        Handles any incoming text messages from the user in order to proceed with or initialize the questionnaire.
+        It verifies whether the user has selected a language and agreed to the privacy policy (if required).
+        If these preconditions are not met, the user is prompted accordingly.
 
         Args:
-            update (Update): The incoming message update containing the user's response.
-            context (CallbackContext): The context of the update.
+            update (Update): The incoming Telegram update that contains the user's text message.
+            context (CallbackContext): Provides context for the Telegram bot, including user data.
         """
+        # Extract the Telegram user ID from the incoming message.
         user_id = update.message.from_user.id
+
+        # Retrieve the user's state from our persistent storage, such as Google Sheets or a database.
+        lang, current_question_index, responses, chat_id = self.google_sheets.get_user_state(user_id)
+
+        # If the user has not chosen a language yet (lang is None or an empty string).
+        # In this case, we send a message in three languages, instructing them to press a button.
+        if not lang:
+            # Send a multilingual prompt instructing the user to press one of the buttons.
+            await update.message.reply_text(Localization.PRESS_BUTTON_MULTILANG)
+            return
+
+        # If the user has chosen a language but has not yet agreed to the privacy policy (current_question_index < 0).
+        # We prompt them in the chosen language to press the button on the screen.
+        if current_question_index < 0:
+            press_button_text = self.localization.get_string(lang, "press_button")
+            # Notify the user that they should press the "Agree" or "Disagree" button to proceed.
+            await update.message.reply_text(press_button_text)
+            return
+
+        # If we reach this point, current_question_index >= 0, meaning the user has agreed to the privacy policy.
+        # We can safely proceed with the questionnaire flow.
+        if isinstance(responses, dict):
+            # Convert responses from a dict to a list of tuples if necessary.
+            responses = [(q, a) for q, a in responses.items()]
+
+        # Retrieve or create an in-memory form object for the user.
         form = self.user_forms.get(user_id)
         if not form:
-            # Recreate the form from the saved state if necessary.
-            lang, current_question_index, responses, chat_id = self.google_sheets.get_user_state(user_id)
-            if not lang:
-                await update.message.reply_text(self.localization.get_string("en", "error_message"))
-                return
-            if isinstance(responses, dict):
-                responses = [(q, a) for q, a in responses.items()]
+            # If no form exists in memory, reconstruct it from the persisted data.
             form = ApplicationForm(lang, self.localization)
             form.current_question_index = current_question_index
             form.responses = responses
             self.user_forms[user_id] = form
 
+        # Extract the user's textual response from the message.
         user_response = update.message.text.strip()
-        # Validate and handle the user's response.
+
+        # Validate the user's response based on the current question's type (email, phone, age, etc.).
+        # If validation fails, _validate_and_handle_response will notify the user and return False.
         if not await self._validate_and_handle_response(user_response, form, user_id):
             return
 
+        # Check if the form is complete (all questions answered).
         if form.is_complete():
-            # Save the user's completed responses to Google Sheets.
+            # Save final user data to Google Sheets or another storage.
             self.google_sheets.save_to_sheet(user_id, form.get_all_responses())
-            self._save_user_state(user_id, form.lang, form.current_question_index, form.responses, self.google_sheets.get_chat_id(user_id))
-            del self.user_forms[user_id]  # Clean up the completed form.
+            # Update the user's state to reflect the completed questionnaire.
+            self._save_user_state(user_id, form.lang, form.current_question_index, form.responses, chat_id)
+            # Remove the form from memory to free resources.
+            del self.user_forms[user_id]
+            # Notify the user that the application is complete.
             await update.message.reply_text(self.localization.get_string(form.lang, "application_complete"))
+            # Optionally approve the user's request to join a group, if applicable.
             await self.approve_join_request(user_id, context)
         else:
+            # If the form is not complete, send the next question to the user.
             await self._send_next_question(user_id)
 
     async def handle_join_request(self, update, context):
