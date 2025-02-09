@@ -39,7 +39,7 @@ class Utils:
                 self.bot = Bot(token=Config.TELEGRAM_BOT_TOKEN)
         return self.bot
 
-    def notify_admin(self, message: str):
+    async def notify_admin(self, message: str):
         """
         Sends a message to the admin chat for critical notifications or announcements.
 
@@ -48,11 +48,11 @@ class Utils:
         """
         try:
             bot = self._get_bot()  # Perform lazy initialization if necessary.
-            bot.send_message(chat_id=self.admin_chat_id, text=message)
+            await bot.send_message(chat_id=self.admin_chat_id, text=message)
         except Exception as e:
             logger.error(f"Error sending notification to admin: {e}", exc_info=True)
 
-    def notify_admin_group(self, message: str, admin_group_chat_id: str):
+    async def notify_admin_group(self, message: str, admin_group_chat_id: str):
         """
         Sends a message to the specified admin group chat for notifications or updates.
 
@@ -62,11 +62,11 @@ class Utils:
         """
         try:
             bot = self._get_bot()
-            bot.send_message(chat_id=admin_group_chat_id, text=message)
+            await bot.send_message(chat_id=admin_group_chat_id, text=message)
         except Exception as e:
             logger.error(f"Error sending notification to admin group: {e}", exc_info=True)
 
-    def send_user_message(self, user_id: str, message: str):
+    async def send_user_message(self, user_id: str, message: str):
         """
         Sends a text message to a specific Telegram user.
 
@@ -76,7 +76,7 @@ class Utils:
         """
         try:
             bot = self._get_bot()
-            bot.send_message(chat_id=user_id, text=message)
+            await bot.send_message(chat_id=user_id, text=message)
         except Exception as e:
             logger.error(f"Error sending message to user {user_id}: {e}", exc_info=True)
 
