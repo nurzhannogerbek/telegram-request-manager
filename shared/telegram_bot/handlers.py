@@ -221,7 +221,9 @@ class BotHandlers:
         if chat_id:
             # Approve the join request using the chat ID and user ID.
             await context.bot.approve_chat_join_request(chat_id=int(chat_id), user_id=user_id)
-            self.utils.notify_admin(f"✅ User {user_id} has been approved.")
+
+            # Notify the admin about the approved user (await added here).
+            await self.utils.notify_admin(f"✅ User {user_id} has been approved.")
 
     @staticmethod
     async def fetch_username_and_bio(context, user_id):
