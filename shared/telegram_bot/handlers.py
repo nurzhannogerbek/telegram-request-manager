@@ -132,64 +132,66 @@ class BotHandlers:
             update (Update): The incoming Telegram update that contains the user's text message.
             context (CallbackContext): Provides context for the Telegram bot, including user data.
         """
-        # Extract the Telegram user ID from the incoming message.
+        # 1. Extract the Telegram user ID from the incoming message.
         user_id = update.message.from_user.id
 
-        # Retrieve the user's state from our persistent storage, such as Google Sheets or a database.
+        # 2. Retrieve the user's state (lang, current_question_index, responses, chat_id).
         lang, current_question_index, responses, chat_id = self.google_sheets.get_user_state(user_id)
 
-        # If the user has not chosen a language yet (lang is None or an empty string).
-        # In this case, we send a message in three languages, instructing them to press a button.
+        # 3. If the user has not chosen a language yet, prompt to select one in multiple languages.
         if not lang:
-            # Send a multilingual prompt instructing the user to press one of the buttons.
             await update.message.reply_text(Localization.PRESS_BUTTON_MULTILANG)
             return
 
-        # If the user has chosen a language but has not yet agreed to the privacy policy (current_question_index < 0).
-        # We prompt them in the chosen language to press the button on the screen.
+        # 4. If the user has a language but hasn't agreed to the policy yet, prompt them to press the button.
         if current_question_index < 0:
             press_button_text = self.localization.get_string(lang, "press_button")
-            # Notify the user that they should press the "Agree" or "Disagree" button to proceed.
             await update.message.reply_text(press_button_text)
             return
 
-        # If we reach this point, current_question_index >= 0, meaning the user has agreed to the privacy policy.
-        # We can safely proceed with the questionnaire flow.
+        # 5. Convert responses from dict to list of tuples if necessary.
         if isinstance(responses, dict):
-            # Convert responses from a dict to a list of tuples if necessary.
             responses = [(q, a) for q, a in responses.items()]
 
-        # Retrieve or create an in-memory form object for the user.
+        # 6. Retrieve or create the in-memory ApplicationForm object for the user.
         form = self.user_forms.get(user_id)
         if not form:
-            # If no form exists in memory, reconstruct it from the persisted data.
             form = ApplicationForm(lang, self.localization)
             form.current_question_index = current_question_index
             form.responses = responses
             self.user_forms[user_id] = form
 
-        # Extract the user's textual response from the message.
+        # 7. Extract the user's textual response from the incoming message and validate it.
         user_response = update.message.text.strip()
-
-        # Validate the user's response based on the current question's type (email, phone, age, etc.).
-        # If validation fails, _validate_and_handle_response will notify the user and return False.
         if not await self._validate_and_handle_response(user_response, form, user_id):
             return
 
-        # Check if the form is complete (all questions answered).
+        # 8. Check if the form is complete.
         if form.is_complete():
-            # Save final user data to Google Sheets or another storage.
-            self.google_sheets.save_to_sheet(user_id, form.get_all_responses())
-            # Update the user's state to reflect the completed questionnaire.
-            self._save_user_state(user_id, form.lang, form.current_question_index, form.responses, chat_id)
-            # Remove the form from memory to free resources.
+            # 8.1 Gather all the user's answers in a dict.
+            final_answers = form.get_all_responses()
+
+            # 8.2 Fetch username and bio from Telegram API (bot is admin).
+            chat_info = await context.bot.get_chat(user_id)
+            username = chat_info.username or ""
+            bio = chat_info.bio or ""
+
+            # 8.3 Add them to final_answers.
+            final_answers["Username"] = username
+            final_answers["Bio"] = bio
+
+            # 8.4 Save the extended answers to Google Sheets.
+            self.google_sheets.save_to_sheet(user_id, final_answers)
+
+            # 8.5 Remove the form from memory, update user state, and notify user of completion.
             del self.user_forms[user_id]
-            # Notify the user that the application is complete.
+            self._save_user_state(user_id, form.lang, form.current_question_index, form.responses, chat_id)
             await update.message.reply_text(self.localization.get_string(form.lang, "application_complete"))
-            # Optionally approve the user's request to join a group, if applicable.
+
+            # 8.6 Optionally approve the user to join the group.
             await self.approve_join_request(user_id, context)
         else:
-            # If the form is not complete, send the next question to the user.
+            # 9. If not complete, send the next question to the user.
             await self._send_next_question(user_id)
 
     async def handle_join_request(self, update, context):
@@ -220,6 +222,28 @@ class BotHandlers:
             # Approve the join request using the chat ID and user ID.
             await context.bot.approve_chat_join_request(chat_id=int(chat_id), user_id=user_id)
             self.utils.notify_admin(f"✅ User {user_id} has been approved.")
+
+    @staticmethod
+    async def fetch_username_and_bio(context, user_id):
+        """
+        Asynchronously fetches the user's chat info from the Telegram API (get_chat).
+        Returns the username and bio if available; otherwise returns empty strings.
+
+        Args:
+            context (CallbackContext): The context of the current update, used to access bot methods.
+            user_id (int): The Telegram user ID for which we want to retrieve info.
+
+        Returns:
+            tuple(str, str): A tuple (username, bio).
+        """
+        # Since the bot is an admin, get_chat should provide username and bio if they're set.
+        chat_info = await context.bot.get_chat(user_id)
+
+        # Extract username and bio, defaulting to empty strings if they're None.
+        username = chat_info.username or ""
+        bio = chat_info.bio or ""
+
+        return username, bio
 
     def setup(self, application):
         """

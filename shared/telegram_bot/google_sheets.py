@@ -104,7 +104,9 @@ class GoogleSheets:
                 "Purpose",
                 "Occupation",
                 "Workplace",
-                "City"
+                "City",
+                "Username",
+                "Bio"
             ]
             # Create a new row with the user's ID and their responses, ensuring fields match the column order.
             row = [str(user_id)] + [responses.get(column, "") for column in column_order[1:]]
