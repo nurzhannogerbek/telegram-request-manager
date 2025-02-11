@@ -95,31 +95,49 @@ class BotHandlers:
 
     async def handle_privacy_response(self, update, context):
         """
-        Handles the user's response to the privacy policy and initiates the questionnaire if accepted.
+        Handles the user's response to the privacy policy agreement.
+        If the user agrees, the bot starts the questionnaire by sending the first question.
 
         Args:
-            update (Update): The incoming callback update.
+            update (Update): The incoming callback update from Telegram.
             context (CallbackContext): The context of the update.
         """
+        # Get the callback query from the user.
         query = update.callback_query
-        await query.answer()
+        await query.answer()  # Acknowledge the callback to prevent Telegram from showing "loading...".
+
+        # Extract the user's Telegram ID.
         user_id = query.from_user.id
+
+        # Retrieve the user's saved state from Google Sheets.
         lang, current_question_index, responses, chat_id = self.google_sheets.get_user_state(user_id)
+
+        # Convert responses from dictionary to list of tuples if necessary.
         if isinstance(responses, dict):
             responses = [(k, v) for k, v in responses.items()]
 
+        # Check if the user accepted the privacy policy.
         if query.data == "privacy_accept":
-            # Start the questionnaire if the user accepts the privacy policy.
+            # Create a new application form for the user to start the questionnaire.
             form = ApplicationForm(lang, self.localization)
-            form.current_question_index = 0
-            form.responses = responses
-            self.user_forms[user_id] = form
+            form.current_question_index = 0  # Set the starting question index.
+            form.responses = responses  # Load any existing responses.
+            self.user_forms[user_id] = form  # Store the form in memory.
+
+            # Save the user's state (so progress can be recovered if needed).
             self._save_user_state(user_id, lang, form.current_question_index, form.responses, chat_id)
-            await query.edit_message_text(text=self.localization.get_string(lang, "start_questionnaire"))
-            await self._send_next_question(user_id)
+
+            # Retrieve the first question from the questionnaire.
+            first_question = form.get_next_question()
+
+            # Edit the existing message to include the questionnaire introduction and the first question.
+            await query.edit_message_text(
+                text=f"{self.localization.get_string(lang, 'start_questionnaire')}\n\n{first_question}"
+            )
+
+        # If the user had rejected the policy (not used in current implementation).
         else:
-            # Inform the user that the interaction has ended if they decline the privacy policy.
-            # await query.edit_message_text(text=self.localization.get_string(lang, "decline_message"))
+            # The bot does nothing; you may customize this behavior if needed.
             pass
 
     async def handle_response(self, update, context):
