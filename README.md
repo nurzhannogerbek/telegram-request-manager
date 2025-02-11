@@ -40,7 +40,6 @@ telegram-request-manager
 |-- .github
 |   `-- workflows
 |       `-- deploy.yml            # GitHub Actions CI/CD pipeline
-|-- .venv                         # Virtual environment for dependencies
 |-- deployment
 |   `-- terraform                 # Infrastructure as code using Terraform
 |       |-- environments
