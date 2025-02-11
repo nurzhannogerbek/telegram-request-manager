@@ -38,9 +38,10 @@ jobs:
           ls -l ../../deployment/terraform/
 
       - name: Check and generate sha256sum for Test
+        working-directory: deployment/terraform
         run: |
-          if [ -f "../../deployment/terraform/test_telegram_bot.zip" ]; then
-            sha256sum ../../deployment/terraform/test_telegram_bot.zip > ../../deployment/terraform/test_telegram_bot.zip.sha256
+          if [ -f "test_telegram_bot.zip" ]; then
+            sha256sum test_telegram_bot.zip > test_telegram_bot.zip.sha256
           else
             echo "ERROR: test_telegram_bot.zip not found!" && exit 1
           fi
@@ -117,9 +118,10 @@ jobs:
           ls -l ../../deployment/terraform/
 
       - name: Check and generate sha256sum for Prod
+        working-directory: deployment/terraform
         run: |
-          if [ -f "../../deployment/terraform/prod_telegram_bot.zip" ]; then
-            sha256sum ../../deployment/terraform/prod_telegram_bot.zip > ../../deployment/terraform/prod_telegram_bot.zip.sha256
+          if [ -f "prod_telegram_bot.zip" ]; then
+            sha256sum prod_telegram_bot.zip > prod_telegram_bot.zip.sha256
           else
             echo "ERROR: prod_telegram_bot.zip not found!" && exit 1
           fi
