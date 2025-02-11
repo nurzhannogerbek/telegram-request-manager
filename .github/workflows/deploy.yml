@@ -28,6 +28,7 @@ jobs:
         with:
           terraform_version: 1.5.0 # Specify the version of Terraform to install and use.
 
+      # Step 3: Install dependencies and package the Lambda function for deployment.
       - name: Install dependencies and package Lambda function (Test)
         working-directory: lambdas/telegram_bot
         run: |
@@ -35,16 +36,8 @@ jobs:
           pip install -r requirements.txt -t .
           cp -r ../../shared .
           zip -r ../../deployment/terraform/test_telegram_bot.zip .
-          ls -l ../../deployment/terraform/
-
-      - name: Check and generate sha256sum for Test
-        working-directory: deployment/terraform
-        run: |
-          if [ -f "test_telegram_bot.zip" ]; then
-            sha256sum test_telegram_bot.zip > test_telegram_bot.zip.sha256
-          else
-            echo "ERROR: test_telegram_bot.zip not found!" && exit 1
-          fi
+          cp ../../deployment/terraform/test_telegram_bot.zip ../../deployment/terraform/telegram_bot.zip
+          sha256sum ../../deployment/terraform/telegram_bot.zip > ../../deployment/terraform/telegram_bot.zip.sha256
 
       # Step 4: Display a partial debug of the service account private key (for verification purposes).
       - name: Debug service_account_private_key
@@ -108,6 +101,7 @@ jobs:
         with:
           terraform_version: 1.5.0 # Specify the version of Terraform to install and use.
 
+      # Step 3: Install dependencies and package the Lambda function for deployment.
       - name: Install dependencies and package Lambda function (Prod)
         working-directory: lambdas/telegram_bot
         run: |
@@ -115,16 +109,8 @@ jobs:
           pip install -r requirements.txt -t .
           cp -r ../../shared .
           zip -r ../../deployment/terraform/prod_telegram_bot.zip .
-          ls -l ../../deployment/terraform/
-
-      - name: Check and generate sha256sum for Prod
-        working-directory: deployment/terraform
-        run: |
-          if [ -f "prod_telegram_bot.zip" ]; then
-            sha256sum prod_telegram_bot.zip > prod_telegram_bot.zip.sha256
-          else
-            echo "ERROR: prod_telegram_bot.zip not found!" && exit 1
-          fi
+          cp ../../deployment/terraform/prod_telegram_bot.zip ../../deployment/terraform/telegram_bot.zip
+          sha256sum ../../deployment/terraform/telegram_bot.zip > ../../deployment/terraform/telegram_bot.zip.sha256
 
       # Step 4: Display a partial debug of the service account private key (for verification purposes).
       - name: Debug service_account_private_key
