@@ -116,7 +116,7 @@ class GoogleSheets:
         # Retry the append operation in case of transient failures.
         self._retry_on_failure(append_row)
 
-    def save_user_state(self, user_id, lang, current_question_index, responses, chat_id, last_question=None):
+    def save_user_state(self, user_id, lang, current_question_index, responses, chat_id=None, last_question=None):
         """
         Saves the user's current state, including responses and progress, to the metadata worksheet.
 
@@ -125,16 +125,23 @@ class GoogleSheets:
             lang (str): The selected language of the user.
             current_question_index (int): The index of the current question being asked.
             responses (dict): The user's responses.
-            chat_id (str): The Telegram chat ID.
+            chat_id (str, optional): The group chat ID where the user wants to join.
             last_question (str, optional): The last question asked (if applicable).
         """
 
         def save_state():
+            # Ensure chat_id is a **valid string** and not None.
+            local_chat_id = str(chat_id) if chat_id else ""  # Renamed to `local_chat_id` to avoid reference issues.
+
+            # Ensure that chat_id is the **group chat ID**, not a personal chat ID.
+            if not local_chat_id.startswith("-"):
+                local_chat_id = ""  # If it's not a group ID, we clear it to avoid issues.
+
             # Serialize the user's responses into a JSON string for storage.
             responses_json = json.dumps(responses)
+
             # Prepare the row with user state information.
-            new_row = [str(user_id), str(chat_id), lang, str(current_question_index), responses_json,
-                       last_question or ""]
+            new_row = [str(user_id), local_chat_id, lang, str(current_question_index), responses_json, last_question or ""]
             records = self.metadata_sheet.get_all_records()
 
             # Check if the user already exists in the metadata sheet.

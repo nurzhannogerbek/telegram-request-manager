@@ -147,31 +147,33 @@ class BotHandlers:
         If these preconditions are not met, the user is prompted accordingly.
 
         Args:
-            update (Update): The incoming Telegram update that contains the user's text message.
+            update (Update): The incoming Telegram update containing the user's text message.
             context (CallbackContext): Provides context for the Telegram bot, including user data.
         """
-        # 1. Extract the Telegram user ID from the incoming message.
+
+        # 1. Extract the user's Telegram ID (used for private messaging).
         user_id = update.message.from_user.id
 
-        # 2. Retrieve the user's state (lang, current_question_index, responses, chat_id).
-        lang, current_question_index, responses, chat_id = self.google_sheets.get_user_state(user_id)
+        # 2. Retrieve the user's state (language, current question index, responses, and group chat_id).
+        lang, current_question_index, responses, stored_chat_id = self.google_sheets.get_user_state(user_id)
 
-        # 3. If the user has not chosen a language yet, prompt to select one in multiple languages.
+        # 3. If the user has not selected a language yet, prompt them to choose one.
         if not lang:
-            await update.message.reply_text(Localization.PRESS_BUTTON_MULTILANG)
+            # Always reply in private chat, even if the user mistakenly messages in the group.
+            await context.bot.send_message(chat_id=user_id, text=Localization.PRESS_BUTTON_MULTILANG)
             return
 
-        # 4. If the user has a language but hasn't agreed to the policy yet, prompt them to press the button.
+        # 4. If the user has selected a language but hasn't agreed to the privacy policy yet, prompt them.
         if current_question_index < 0:
             press_button_text = self.localization.get_string(lang, "press_button")
-            await update.message.reply_text(press_button_text)
+            await context.bot.send_message(chat_id=user_id, text=press_button_text)
             return
 
-        # 5. Convert responses from dict to list of tuples if necessary.
+        # 5. Convert responses from a dictionary to a list of tuples if necessary.
         if isinstance(responses, dict):
             responses = [(q, a) for q, a in responses.items()]
 
-        # 6. Retrieve or create the in-memory ApplicationForm object for the user.
+        # 6. Retrieve or create an in-memory ApplicationForm object for the user.
         form = self.user_forms.get(user_id)
         if not form:
             form = ApplicationForm(lang, self.localization)
@@ -179,37 +181,42 @@ class BotHandlers:
             form.responses = responses
             self.user_forms[user_id] = form
 
-        # 7. Extract the user's textual response from the incoming message and validate it.
+        # 7. Extract the user's response text and validate it.
         user_response = update.message.text.strip()
         if not await self._validate_and_handle_response(user_response, form, user_id):
-            return
+            return  # If validation fails, stop processing further.
 
         # 8. Check if the form is complete.
         if form.is_complete():
-            # 8.1 Gather all the user's answers in a dict.
+            # 8.1 Gather all user responses into a dictionary.
             final_answers = form.get_all_responses()
 
-            # 8.2 Fetch username and bio from Telegram API (bot is admin).
+            # 8.2 Fetch username and bio from Telegram API (only works if the bot is an admin).
             chat_info = await context.bot.get_chat(user_id)
             username = chat_info.username or ""
             bio = chat_info.bio or ""
 
-            # 8.3 Add them to final_answers.
+            # 8.3 Add the username and bio to the final_answers dictionary.
             final_answers["Username"] = username
             final_answers["Bio"] = bio
 
-            # 8.4 Save the extended answers to Google Sheets.
+            # 8.4 Save the user's responses in Google Sheets.
             self.google_sheets.save_to_sheet(user_id, final_answers)
 
-            # 8.5 Remove the form from memory, update user state, and notify user of completion.
+            # 8.5 Remove the form from memory, update user state, and notify the user of completion.
             del self.user_forms[user_id]
-            self._save_user_state(user_id, form.lang, form.current_question_index, form.responses, chat_id)
-            await update.message.reply_text(self.localization.get_string(form.lang, "application_complete"))
+            self._save_user_state(user_id, form.lang, form.current_question_index, form.responses, stored_chat_id)
 
-            # 8.6 Optionally approve the user to join the group.
+            # 8.6 Send a confirmation message to the user.
+            await context.bot.send_message(
+                chat_id=user_id,
+                text=self.localization.get_string(form.lang, "application_complete")
+            )
+
+            # 8.7 Approve the user’s request to join the group (if applicable).
             await self.approve_join_request(user_id, context)
         else:
-            # 9. If not complete, send the next question to the user.
+            # 9. If the form is not yet complete, send the next question to the user.
             await self._send_next_question(user_id)
 
     async def handle_join_request(self, update, context):
