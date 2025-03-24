@@ -293,19 +293,33 @@ class BotHandlers:
 
     async def approve_join_request(self, user_id, context):
         """
-        Approves the user's join request after successful completion of the questionnaire.
+        Approves the user's join request after successful completion of the questionnaire
+        and sends full user data to the admin group.
 
         Args:
             user_id (str): The Telegram user ID.
             context (CallbackContext): The context of the update.
         """
-        _, _, _, chat_id = self.google_sheets.get_user_state(user_id)
+        # Retrieve user's saved state (includes chat_id).
+        lang, _, _, chat_id = self.google_sheets.get_user_state(user_id)
+
         if chat_id:
-            # Approve the join request using the chat ID and user ID.
+            # Approve the join request.
             await context.bot.approve_chat_join_request(chat_id=int(chat_id), user_id=user_id)
 
-            # Notify the admin about the approved user (await added here).
-            await self.utils.notify_admin(f"✅ User {user_id} has been approved.")
+        # Fetch the full row of data from Google Sheets by user ID.
+        final_data = self.google_sheets.get_user_row(user_id)
+        if not final_data:
+            await self.utils.notify_admin("✅ User approved but no data found in the Google Sheets.")
+            return
+
+        # Format the data for a readable admin message.
+        formatted_message = "✅ *New Member Approved!*\n\n"
+        for key, value in final_data.items():
+            formatted_message += f"*{key}:* {value}\n"
+
+        # Send to admin group.
+        await self.utils.notify_admin(formatted_message)
 
     @staticmethod
     async def fetch_username_and_bio(context, user_id):

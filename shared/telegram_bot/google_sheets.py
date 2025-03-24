@@ -227,3 +227,19 @@ class GoogleSheets:
 
         # Retry the chat ID-fetching operation if necessary.
         return self._retry_on_failure(fetch_chat_id)
+
+    def get_user_row(self, user_id):
+        """
+        Retrieves the full row of user data from the main sheet by user ID.
+
+        Args:
+            user_id (str): The Telegram user ID.
+
+        Returns:
+            dict: A dictionary with column names as keys and user responses as values.
+        """
+        records = self.main_sheet.get_all_records()
+        for row in records:
+            if str(row.get("User ID")) == str(user_id):
+                return row
+        return None

@@ -2,6 +2,7 @@ import shared.telegram_bot.globals as globs
 from shared.telegram_bot.logger import logger
 from shared.telegram_bot.config import Config
 from telegram import Bot
+from telegram.helpers import escape_markdown
 
 class Utils:
     """
@@ -47,8 +48,8 @@ class Utils:
             message (str): The text message to be sent to the admin.
         """
         try:
-            bot = self._get_bot()  # Perform lazy initialization if necessary.
-            await bot.send_message(chat_id=self.admin_chat_id, text=message)
+            bot = self._get_bot()
+            await bot.send_message(chat_id=self.admin_chat_id, text=escape_markdown(message), parse_mode="Markdown")
         except Exception as e:
             logger.error(f"Error sending notification to admin: {e}", exc_info=True)
 
