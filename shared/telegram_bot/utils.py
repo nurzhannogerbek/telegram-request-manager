@@ -52,7 +52,7 @@ class Utils:
             await bot.send_message(
                 chat_id=self.admin_chat_id,
                 text=message,
-                parse_mode="Markdown"
+                parse_mode="HTML"
             )
         except Exception as e:
             logger.error(f"Error sending notification to admin: {e}", exc_info=True)
