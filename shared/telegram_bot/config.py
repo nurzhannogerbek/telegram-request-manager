@@ -7,6 +7,11 @@ class Config:
     If any required variable is missing, an error is raised to prevent misconfiguration.
     """
 
+    # Telegram group invite link, injected via environment variables.
+    GROUP_INVITE_LINK = os.getenv("GROUP_INVITE_LINK")
+    if not GROUP_INVITE_LINK:
+        raise EnvironmentError("GROUP_INVITE_LINK environment variable is not set.")
+
     # Retrieve the Telegram bot token from the environment variables.
     TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
     if not TELEGRAM_BOT_TOKEN:

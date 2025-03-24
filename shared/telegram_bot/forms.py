@@ -43,6 +43,8 @@ class ApplicationForm:
             "Какой у вас род деятельности?": "Occupation",
             "Какое у вас место работы?": "Workplace",
             "В каком городе вы проживаете?": "City",
+            "Какой у вас инстаграм?": "Instagram",
+            "Откуда вы узнали про нас?": "Referral Source",
             "Сізге қалай жүгінуге болады? Толық атыңызды енгізіңіз, өтінеміз.": "Full Name",
             "Жасыңыз қаншада?": "Age",
             "Электрондық пошта мекенжайыңызды көрсетіңіз (мысалы: name@example.com).": "Email",
@@ -51,6 +53,8 @@ class ApplicationForm:
             "Сіздің қызметіңіз қандай?": "Occupation",
             "Сіз қай жерде жұмыс істейсіз?": "Workplace",
             "Сіз қай қалада тұрасыз?": "City",
+            "Сіздің инстаграмыңыз қандай?": "Instagram",
+            "Біз туралы қайдан білдіңіз?": "Referral Source",
             "How should we address you? Please enter your full name.": "Full Name",
             "How old are you?": "Age",
             "Please provide your email address (e.g., name@example.com).": "Email",
@@ -58,7 +62,9 @@ class ApplicationForm:
             "Please tell us why you want to join our group.": "Purpose",
             "What is your occupation?": "Occupation",
             "Where do you work?": "Workplace",
-            "In which city do you live?": "City"
+            "In which city do you live?": "City",
+            "What's your Instagram?": "Instagram",
+            "How did you hear about us?": "Referral Source"
         }
 
     def get_next_question(self):
@@ -93,9 +99,14 @@ class ApplicationForm:
         Raises:
             ValueError: If the response is empty.
         """
+        # Trim whitespace and ensure the response is not empty before processing.
         response = response.strip()
         if not response:
             raise ValueError("The response cannot be empty.")
+
+        # Defensive check: ensure we don't exceed question list length.
+        if self.current_question_index >= len(self.questions):
+            raise IndexError("No more questions available. The form is already complete.")
 
         # Get the text of the current question.
         current_question_text = self.questions[self.current_question_index]["question"]

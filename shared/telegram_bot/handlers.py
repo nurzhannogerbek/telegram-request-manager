@@ -3,6 +3,9 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from shared.telegram_bot.forms import ApplicationForm
 from shared.telegram_bot.localization import Localization
 from shared.telegram_bot.validation import Validation
+from telegram.error import Forbidden
+from shared.telegram_bot.logger import logger
+from shared.telegram_bot.config import Config
 
 class BotHandlers:
     """
@@ -52,6 +55,9 @@ class BotHandlers:
             context (CallbackContext): The context of the update.
         """
         query = update.callback_query
+        user = query.from_user
+        if user.is_bot:
+            return
         await query.answer()
         user_id = query.from_user.id
         lang = query.data.split("_")[1]  # Extract the selected language code.
@@ -104,10 +110,16 @@ class BotHandlers:
         """
         # Get the callback query from the user.
         query = update.callback_query
+        user = query.from_user
+
+        # Ignore callbacks from bots to prevent unwanted processing and Forbidden errors.
+        if user.is_bot:
+            return
+
         await query.answer()  # Acknowledge the callback to prevent Telegram from showing "loading...".
 
         # Extract the user's Telegram ID.
-        user_id = query.from_user.id
+        user_id = user.id
 
         # Retrieve the user's saved state from Google Sheets.
         lang, current_question_index, responses, chat_id = self.google_sheets.get_user_state(user_id)
@@ -150,30 +162,43 @@ class BotHandlers:
             update (Update): The incoming Telegram update containing the user's text message.
             context (CallbackContext): Provides context for the Telegram bot, including user data.
         """
+        # 1. Ensure the update contains a message and a real user (not a bot).
+        if not update.message or not update.message.from_user:
+            return  # Ignore updates without a message or a user.
 
-        # 1. Extract the user's Telegram ID (used for private messaging).
-        user_id = update.message.from_user.id
+        # Extract the user object from the message for further validation and processing.
+        user = update.message.from_user
 
-        # 2. Retrieve the user's state (language, current question index, responses, and group chat_id).
-        lang, current_question_index, responses, stored_chat_id = self.google_sheets.get_user_state(user_id)
-
-        # 3. If the user has not selected a language yet, prompt them to choose one.
-        if not lang:
-            # Always reply in private chat, even if the user mistakenly messages in the group.
-            await context.bot.send_message(chat_id=user_id, text=Localization.PRESS_BUTTON_MULTILANG)
+        # 2. Skip if the message is from a bot account.
+        if user.is_bot:
             return
 
-        # 4. If the user has selected a language but hasn't agreed to the privacy policy yet, prompt them.
+        # 3. Extract the user's Telegram ID (used for private messaging).
+        user_id = user.id
+
+        # 4. Retrieve the user's state (language, current question index, responses, and group chat_id).
+        lang, current_question_index, responses, stored_chat_id = self.google_sheets.get_user_state(user_id)
+
+        # 5. If the user has not selected a language yet, prompt them to choose one.
+        if not lang:
+            # Always reply in private chat, even if the user mistakenly messages in the group.
+            try:
+                await context.bot.send_message(chat_id=user_id, text=Localization.PRESS_BUTTON_MULTILANG)
+            except Forbidden:
+                logger.warning(f"Cannot send message to user {user_id} — bot is not allowed to initiate the chat.")
+            return
+
+        # 6. If the user has selected a language but hasn't agreed to the privacy policy yet, prompt them.
         if current_question_index < 0:
             press_button_text = self.localization.get_string(lang, "press_button")
             await context.bot.send_message(chat_id=user_id, text=press_button_text)
             return
 
-        # 5. Convert responses from a dictionary to a list of tuples if necessary.
+        # 7. Convert responses from a dictionary to a list of tuples if necessary.
         if isinstance(responses, dict):
             responses = [(q, a) for q, a in responses.items()]
 
-        # 6. Retrieve or create an in-memory ApplicationForm object for the user.
+        # 8. Retrieve or create an in-memory ApplicationForm object for the user.
         form = self.user_forms.get(user_id)
         if not form:
             form = ApplicationForm(lang, self.localization)
@@ -181,42 +206,55 @@ class BotHandlers:
             form.responses = responses
             self.user_forms[user_id] = form
 
-        # 7. Extract the user's response text and validate it.
-        user_response = update.message.text.strip()
-        if not await self._validate_and_handle_response(user_response, form, user_id):
-            return  # If validation fails, stop processing further.
-
-        # 8. Check if the form is complete.
+        # Skip saving if the form is already complete.
         if form.is_complete():
-            # 8.1 Gather all user responses into a dictionary.
-            final_answers = form.get_all_responses()
-
-            # 8.2 Fetch username and bio from Telegram API (only works if the bot is an admin).
-            chat_info = await context.bot.get_chat(user_id)
-            username = chat_info.username or ""
-            bio = chat_info.bio or ""
-
-            # 8.3 Add the username and bio to the final_answers dictionary.
-            final_answers["Username"] = username
-            final_answers["Bio"] = bio
-
-            # 8.4 Save the user's responses in Google Sheets.
-            self.google_sheets.save_to_sheet(user_id, final_answers)
-
-            # 8.5 Remove the form from memory, update user state, and notify the user of completion.
-            del self.user_forms[user_id]
-            self._save_user_state(user_id, form.lang, form.current_question_index, form.responses, stored_chat_id)
-
-            # 8.6 Send a confirmation message to the user.
             await context.bot.send_message(
                 chat_id=user_id,
                 text=self.localization.get_string(form.lang, "application_complete")
             )
+            return
 
-            # 8.7 Approve the user’s request to join the group (if applicable).
+        # 9. Extract the user's response text and validate it.
+        user_response = update.message.text.strip()
+        if not await self._validate_and_handle_response(user_response, form, user_id):
+            return  # If validation fails, stop processing further.
+
+        # 10. Check if the form is complete.
+        if form.is_complete():
+            # 10.1 Gather all user responses into a dictionary.
+            final_answers = form.get_all_responses()
+
+            # 10.2 Fetch username and bio from Telegram API (only works if the bot is an admin).
+            chat_info = await context.bot.get_chat(user_id)
+            username = chat_info.username or ""
+            bio = chat_info.bio or ""
+
+            # 10.3 Add the username and bio to the final_answers dictionary.
+            final_answers["Username"] = username
+            final_answers["Bio"] = bio
+
+            # 10.4 Save the user's responses in Google Sheets.
+            self.google_sheets.save_to_sheet(user_id, final_answers)
+
+            # 10.5 Cleanup and confirm completion.
+            del self.user_forms[user_id]
+            self._save_user_state(user_id, form.lang, form.current_question_index, form.responses, stored_chat_id)
+
+            # 10.6 Build and send a localized confirmation message to the user.
+            completion_text = self.localization.get_string(form.lang, "application_complete")
+
+            # Append the group invite link if it’s available in environment variables.
+            if Config.GROUP_INVITE_LINK:
+                # Optionally format as Markdown clickable link.
+                completion_text += f"\n\n🔗 [Qazaq IT Community]({Config.GROUP_INVITE_LINK})"
+
+            # Send the message using Markdown for better formatting.
+            await context.bot.send_message(chat_id=user_id, text=completion_text, parse_mode="Markdown")
+
+            # 10.7 Approve the user’s request to join the group (if applicable).
             await self.approve_join_request(user_id, context)
         else:
-            # 9. If the form is not yet complete, send the next question to the user.
+            # 11. If the form is not yet complete, send the next question to the user.
             await self._send_next_question(user_id)
 
     async def handle_join_request(self, update, context):
@@ -224,14 +262,33 @@ class BotHandlers:
         Handles join requests to the group by initializing the user's state and starting the interaction.
 
         Args:
-            update (Update): The incoming join request update.
-            context (CallbackContext): The context of the update.
+            update (Update): The incoming join request update from Telegram.
+            context (CallbackContext): The context associated with the update.
         """
+        # Extract the join request object from the update.
         join_request = update.chat_join_request
-        user_id = join_request.from_user.id
+
+        # Extract the user who sent the join request.
+        user = join_request.from_user
+
+        # Ignore the request if it's coming from another bot (Telegram bots can't interact with each other).
+        if user.is_bot:
+            return  # Skip processing join requests from bots.
+
+        # Get the unique Telegram user ID of the user requesting to join.
+        user_id = user.id
+
+        # Get the chat ID of the group the user is requesting to join.
         chat_id = join_request.chat.id
-        # Save the initial user state with an empty language and no responses.
+
+        # Initialize and save the user's state in Google Sheets with:
+        # - an empty language string (to be selected later),
+        # - starting at question index 0,
+        # - an empty list of responses,
+        # - and the group chat ID as a string.
         self._save_user_state(user_id, "", 0, [], str(chat_id))
+
+        # Start the onboarding process by sending a language selection message.
         await self.start(update, context)
 
     async def approve_join_request(self, user_id, context):

@@ -3,6 +3,8 @@ from gspread import Client, exceptions
 from google.oauth2.service_account import Credentials
 from shared.telegram_bot.logger import logger
 from shared.telegram_bot.config import Config
+from shared.telegram_bot.localization import Localization
+from datetime import datetime
 
 # Global variables for managing Google Sheets connections and worksheets.
 CREDENTIALS = None  # Stores the Google service account credentials.
@@ -106,8 +108,13 @@ class GoogleSheets:
                 "Workplace",
                 "City",
                 "Username",
-                "Bio"
+                "Bio",
+                "DateTime",
+                "Instagram",
+                "Referral Source"
             ]
+            # Set current datetime for "DateTime" column.
+            responses["DateTime"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             # Create a new row with the user's ID and their responses, ensuring fields match the column order.
             row = [str(user_id)] + [responses.get(column, "") for column in column_order[1:]]
             # Append the row to the main sheet.
@@ -178,9 +185,16 @@ class GoogleSheets:
                     # Ensure responses are formatted as a list of tuples if necessary.
                     if isinstance(responses, dict):
                         responses = [(k, v) for k, v in responses.items()]
+                    lang = record['Language']
+                    raw_index = int(record['Current Question Index'])
+                    # Ensure the question index is within the valid range for the selected language.
+                    # This prevents "index out of range" errors if the stored index is too large.
+                    # For example, if the sheet has "12" but there are only 8 questions, this clamps it to 7.
+                    max_index = len(Localization.get_questions(lang)) - 1
+                    current_question_index = min(raw_index, max_index)
                     return (
-                        record['Language'],
-                        int(record['Current Question Index']),
+                        lang,
+                        current_question_index,
                         responses,
                         record.get('Chat ID', "")
                     )

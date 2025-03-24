@@ -55,6 +55,7 @@ resource "aws_lambda_function" "telegram_bot" {
       PRIVACY_POLICY_URL_RU                     = var.privacy_policy_url_ru
       PRIVACY_POLICY_URL_EN                     = var.privacy_policy_url_en
       PRIVACY_POLICY_URL_KZ                     = var.privacy_policy_url_kz
+      GROUP_INVITE_LINK                         = var.group_invite_link
     }
   }
 

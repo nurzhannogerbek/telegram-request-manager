@@ -73,7 +73,9 @@ class Localization:
             {"question": "Расскажите, зачем вы хотите присоединиться к нашей группе?", "type": "text"},
             {"question": "Какой у вас род деятельности?", "type": "text"},
             {"question": "Какое у вас место работы?", "type": "text"},
-            {"question": "В каком городе вы проживаете?", "type": "text"}
+            {"question": "В каком городе вы проживаете?", "type": "text"},
+            {"question": "Какой у вас инстаграм?", "type": "text"},
+            {"question": "Откуда вы узнали про нас?", "type": "text"}
         ],
         "kz": [
             {"question": "Сізге қалай жүгінуге болады? Толық атыңызды енгізіңіз, өтінеміз.", "type": "text"},
@@ -83,7 +85,9 @@ class Localization:
             {"question": "Біздің топқа не үшін қосылғыңыз келеді?", "type": "text"},
             {"question": "Сіздің қызметіңіз қандай?", "type": "text"},
             {"question": "Сіз қай жерде жұмыс істейсіз?", "type": "text"},
-            {"question": "Сіз қай қалада тұрасыз?", "type": "text"}
+            {"question": "Сіз қай қалада тұрасыз?", "type": "text"},
+            {"question": "Сіздің инстаграмыңыз қандай?", "type": "text"},
+            {"question": "Біз туралы қайдан білдіңіз?", "type": "text"}
         ],
         "en": [
             {"question": "How should we address you? Please enter your full name.", "type": "text"},
@@ -93,7 +97,9 @@ class Localization:
             {"question": "Please tell us why you want to join our group.", "type": "text"},
             {"question": "What is your occupation?", "type": "text"},
             {"question": "Where do you work?", "type": "text"},
-            {"question": "In which city do you live?", "type": "text"}
+            {"question": "In which city do you live?", "type": "text"},
+            {"question": "What's your Instagram?", "type": "text"},
+            {"question": "How did you hear about us?", "type": "text"}
         ]
     }
 

@@ -64,6 +64,7 @@ jobs:
 
           terraform apply \
             -var-file=environments/test/terraform.tfvars \
+            -var="group_invite_link=${{ secrets.TEST_GROUP_INVITE_LINK }}" \
             -var="telegram_bot_token=${{ secrets.TEST_TELEGRAM_BOT_TOKEN }}" \
             -var="admin_chat_id=${{ secrets.TEST_ADMIN_CHAT_ID }}" \
             -var="google_sheet_id=${{ secrets.TEST_GOOGLE_SHEET_ID }}" \
@@ -88,7 +89,7 @@ jobs:
     name: Deploy to Production Environment # Job name for deploying to the production environment.
     needs: deploy-test # Ensure this job runs only after the test deployment succeeds.
     runs-on: ubuntu-latest # Use the latest Ubuntu virtual machine provided by GitHub Actions.
-    # if: false # Temporarily disable the production deployment.
+    if: false # Temporarily disable the production deployment.
 
     steps:
       # Step 1: Check out the repository code into the GitHub Actions runner.
@@ -137,6 +138,7 @@ jobs:
 
           terraform apply \
             -var-file=environments/prod/terraform.tfvars \
+            -var="group_invite_link=${{ secrets.PROD_GROUP_INVITE_LINK }}" \
             -var="telegram_bot_token=${{ secrets.PROD_TELEGRAM_BOT_TOKEN }}" \
             -var="admin_chat_id=${{ secrets.PROD_ADMIN_CHAT_ID }}" \
             -var="google_sheet_id=${{ secrets.PROD_GOOGLE_SHEET_ID }}" \

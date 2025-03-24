@@ -97,3 +97,8 @@ variable "privacy_policy_url_en" {
 variable "privacy_policy_url_kz" {
   description = "URL for the Kazakh privacy policy."
 }
+
+# Variable for the Telegram group invite link.
+variable "group_invite_link" {
+  description = "Telegram group invite link that will be sent to users after completing the questionnaire."
+}
