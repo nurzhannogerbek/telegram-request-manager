@@ -49,23 +49,13 @@ class Utils:
         """
         try:
             bot = self._get_bot()
-            await bot.send_message(chat_id=self.admin_chat_id, text=escape_markdown(message), parse_mode="Markdown")
+            await bot.send_message(
+                chat_id=self.admin_chat_id,
+                text=message,
+                parse_mode="Markdown"
+            )
         except Exception as e:
             logger.error(f"Error sending notification to admin: {e}", exc_info=True)
-
-    async def notify_admin_group(self, message: str, admin_group_chat_id: str):
-        """
-        Sends a message to the specified admin group chat for notifications or updates.
-
-        Args:
-            message (str): The text message to be sent to the admin group.
-            admin_group_chat_id (str): The chat ID of the admin group.
-        """
-        try:
-            bot = self._get_bot()
-            await bot.send_message(chat_id=admin_group_chat_id, text=message)
-        except Exception as e:
-            logger.error(f"Error sending notification to admin group: {e}", exc_info=True)
 
     async def send_user_message(self, user_id: str, message: str):
         """
