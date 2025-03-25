@@ -21,17 +21,20 @@ async def async_lambda_handler(event):
         dict: A dictionary containing the HTTP response with a status code and message.
     """
     try:
-        # Ensure the Telegram application and bot are initialized.
+        # Initialize the application and bot.
         await ensure_application_ready()
-
-        # Initialize the application explicitly.
         await globs.application.initialize()
 
-        # Parse the incoming update from Telegram.
+        # Parse incoming update from Telegram.
         update_data = json.loads(event["body"])
 
-        # Defer actual processing as a separate task (but now, AFTER initialize).
-        asyncio.create_task(post_init_and_process(update_data))
+        # Inspect update type to determine if it's a join request.
+        if "chat_join_request" in update_data:
+            # For join requests: await to ensure welcome message is sent.
+            await post_init_and_process(update_data)
+        else:
+            # For all other updates: background execution.
+            asyncio.create_task(post_init_and_process(update_data))
 
         # Immediately return HTTP 200 response to Telegram.
         return {

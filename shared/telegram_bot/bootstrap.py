@@ -113,11 +113,12 @@ async def post_init_and_process(update_data: dict):
     Args:
         update_data (dict): The raw update payload received from the Telegram webhook.
     """
-    # Ensure the Telegram Application is ready and all handlers are set up.
-    await ensure_application_ready()
+    try:
+        # Convert raw update data into a Telegram Update object.
+        update = Update.de_json(update_data, globs.application.bot)
 
-    # Deserialize the raw update JSON into a Telegram Update object.
-    update = Update.de_json(update_data, globs.application.bot)
-
-    # Process the update using the initialized Telegram Application instance.
-    await globs.application.process_update(update)
+        # Process the update using the Application instance.
+        await globs.application.process_update(update)
+    except Exception as e:
+        # Log any errors that occur during processing (do not raise).
+        logger.error(f"❌ Error while processing update in post_init_and_process: {e}", exc_info=True)
