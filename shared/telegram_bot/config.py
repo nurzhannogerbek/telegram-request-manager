@@ -22,6 +22,11 @@ class Config:
     if not ADMIN_CHAT_ID:
         raise EnvironmentError("ADMIN_CHAT_ID environment variable is not set.")
 
+    # Default group chat ID, used as fallback if user-specific chat_id not found.
+    DEFAULT_GROUP_CHAT_ID = os.getenv("DEFAULT_GROUP_CHAT_ID")
+    if not DEFAULT_GROUP_CHAT_ID:
+        raise EnvironmentError("DEFAULT_GROUP_CHAT_ID environment variable is not set.")
+
     # Retrieve the Google Sheets document ID to store user responses and metadata.
     GOOGLE_SHEET_ID = os.getenv("GOOGLE_SHEET_ID")
     if not GOOGLE_SHEET_ID:

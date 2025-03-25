@@ -43,8 +43,11 @@ class BotHandlers:
             InlineKeyboardButton("Қазақша", callback_data="lang_kz"),
             InlineKeyboardButton("English", callback_data="lang_en")
         ]]
-        await self.bot.send_message(chat_id=user_id, text=self.localization.get_multilang_welcome_message(),
-                                    reply_markup=InlineKeyboardMarkup(keyboard))
+        await self.bot.send_message(
+            chat_id=user_id,
+            text=self.localization.get_multilang_welcome_message(),
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
 
     async def set_language(self, update, context):
         """
@@ -303,8 +306,10 @@ class BotHandlers:
         # Retrieve user's saved state (includes chat_id).
         lang, _, _, chat_id = self.google_sheets.get_user_state(user_id)
 
+        # Approve the join request.
+        if not chat_id:
+            chat_id = Config.DEFAULT_GROUP_CHAT_ID
         if chat_id:
-            # Approve the join request.
             await context.bot.approve_chat_join_request(chat_id=int(chat_id), user_id=user_id)
 
         # Fetch the full row of data from Google Sheets by user ID.

@@ -99,3 +99,24 @@ async def ensure_application_ready():
         except Exception as e:
             logger.error(f"Failed to verify Telegram bot availability: {e}", exc_info=True)
             raise
+
+
+async def post_init_and_process(update_data: dict):
+    """
+    Initializes the Telegram bot application if needed and processes a single Telegram update.
+
+    This function is designed to be used in a "fire-and-forget" fashion inside AWS Lambda
+    to minimize cold start latency by allowing the response to return immediately after
+    launching this task asynchronously.
+
+    Args:
+        update_data (dict): The raw update payload received from the Telegram webhook.
+    """
+    # Ensure the Telegram Application is ready and all handlers are set up.
+    await ensure_application_ready()
+
+    # Deserialize the raw update JSON into a Telegram Update object.
+    update = Update.de_json(update_data, globs.application.bot)  # type: ignore
+
+    # Process the update using the initialized Telegram Application instance.
+    await globs.application.process_update(update)

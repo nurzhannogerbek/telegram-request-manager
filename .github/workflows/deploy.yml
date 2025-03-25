@@ -66,6 +66,7 @@ jobs:
             -var-file=environments/test/terraform.tfvars \
             -var="group_invite_link=${{ secrets.TEST_GROUP_INVITE_LINK }}" \
             -var="telegram_bot_token=${{ secrets.TEST_TELEGRAM_BOT_TOKEN }}" \
+            -var="default_group_chat_id=${{ secrets.TEST_DEFAULT_GROUP_CHAT_ID }}" \
             -var="admin_chat_id=${{ secrets.TEST_ADMIN_CHAT_ID }}" \
             -var="google_sheet_id=${{ secrets.TEST_GOOGLE_SHEET_ID }}" \
             -var="service_account_type=${{ secrets.TEST_SERVICE_ACCOUNT_TYPE }}" \
@@ -140,6 +141,7 @@ jobs:
             -var-file=environments/prod/terraform.tfvars \
             -var="group_invite_link=${{ secrets.PROD_GROUP_INVITE_LINK }}" \
             -var="telegram_bot_token=${{ secrets.PROD_TELEGRAM_BOT_TOKEN }}" \
+            -var="default_group_chat_id=${{ secrets.PROD_DEFAULT_GROUP_CHAT_ID }}" \
             -var="admin_chat_id=${{ secrets.PROD_ADMIN_CHAT_ID }}" \
             -var="google_sheet_id=${{ secrets.PROD_GOOGLE_SHEET_ID }}" \
             -var="service_account_type=${{ secrets.PROD_SERVICE_ACCOUNT_TYPE }}" \

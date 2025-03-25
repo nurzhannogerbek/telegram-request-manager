@@ -102,3 +102,8 @@ variable "privacy_policy_url_kz" {
 variable "group_invite_link" {
   description = "Telegram group invite link that will be sent to users after completing the questionnaire."
 }
+
+# Default Telegram group chat ID used if user starts interaction directly with the bot.
+variable "default_group_chat_id" {
+  description = "Default group chat ID to use when no join request is received and user starts directly with the bot."
+}
