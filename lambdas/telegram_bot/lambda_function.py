@@ -1,7 +1,9 @@
 import json
 import asyncio
+import shared.telegram_bot.globals as globs
 from shared.telegram_bot.logger import logger
 from shared.telegram_bot.bootstrap import post_init_and_process
+from shared.telegram_bot.bootstrap import ensure_application_ready
 
 async def async_lambda_handler(event):
     """
@@ -19,19 +21,22 @@ async def async_lambda_handler(event):
         dict: A dictionary containing the HTTP response with a status code and message.
     """
     try:
-        # Parse the incoming event body as JSON to extract the Telegram update.
+        # Ensure the Telegram application and bot are initialized.
+        await ensure_application_ready()
+
+        # Initialize the application explicitly.
+        await globs.application.initialize()
+
+        # Parse the incoming update from Telegram.
         update_data = json.loads(event["body"])
 
-        # Fire-and-forget async processing to minimize cold start latency.
+        # Defer actual processing as a separate task (but now, AFTER initialize).
         asyncio.create_task(post_init_and_process(update_data))
 
-        # Optional: add a short sleep to allow async task to start before Lambda exits.
-        await asyncio.sleep(0.05)
-
-        # Return a 200 OK response immediately to avoid Telegram retrying the update.
+        # Immediately return HTTP 200 response to Telegram.
         return {
             "statusCode": 200,
-            "body": json.dumps({"message": "Processing started."})
+            "body": json.dumps({"message": "Update received and processing started."})
         }
     except json.JSONDecodeError as e:
         # Handle cases where the incoming payload is not valid JSON.
