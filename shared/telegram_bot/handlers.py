@@ -372,6 +372,8 @@ class BotHandlers:
             responses (list): The list of question-response pairs.
             chat_id (str): The Telegram chat ID.
         """
+        if not chat_id:
+            chat_id = Config.DEFAULT_GROUP_CHAT_ID
         self.google_sheets.save_user_state(user_id, lang, current_question_index, responses, chat_id)
 
     async def _send_next_question(self, user_id):
