@@ -8,6 +8,7 @@ from shared.telegram_bot.utils import Utils
 from telegram.ext import ContextTypes
 from telegram.error import Forbidden, BadRequest, TimedOut, NetworkError
 from shared.telegram_bot.logger import logger
+from telegram import Update
 
 
 class Bootstrap:
@@ -116,7 +117,7 @@ async def post_init_and_process(update_data: dict):
     await ensure_application_ready()
 
     # Deserialize the raw update JSON into a Telegram Update object.
-    update = Update.de_json(update_data, globs.application.bot)  # type: ignore
+    update = Update.de_json(update_data, globs.application.bot)
 
     # Process the update using the initialized Telegram Application instance.
     await globs.application.process_update(update)
