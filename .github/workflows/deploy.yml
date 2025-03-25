@@ -90,7 +90,7 @@ jobs:
     name: Deploy to Production Environment # Job name for deploying to the production environment.
     needs: deploy-test # Ensure this job runs only after the test deployment succeeds.
     runs-on: ubuntu-latest # Use the latest Ubuntu virtual machine provided by GitHub Actions.
-    # if: false # Temporarily disable the production deployment.
+    if: false # Temporarily disable the production deployment.
 
     steps:
       # Step 1: Check out the repository code into the GitHub Actions runner.
