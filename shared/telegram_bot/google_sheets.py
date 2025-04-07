@@ -96,6 +96,10 @@ class GoogleSheets:
         """
 
         def append_row():
+            # Check for duplicates.
+            existing_row = self.get_user_row(user_id)
+            if existing_row:
+                return
             # Define the order of columns where responses will be stored.
             column_order = [
                 "User ID",

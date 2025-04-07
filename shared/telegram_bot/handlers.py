@@ -166,14 +166,14 @@ class BotHandlers:
             context (CallbackContext): Provides context for the Telegram bot, including user data.
         """
         # 1. Ensure the update contains a message and a real user (not a bot).
-        if not update.message or not update.message.from_user:
+        if not update.message or update.message.chat.type != "private" or not update.message.from_user:
             return  # Ignore updates without a message or a user.
 
         # Extract the user object from the message for further validation and processing.
         user = update.message.from_user
 
         # 2. Skip if the message is from a bot account.
-        if user.is_bot:
+        if not user or user.is_bot:
             return
 
         # 3. Extract the user's Telegram ID (used for private messaging).
@@ -211,10 +211,6 @@ class BotHandlers:
 
         # Skip saving if the form is already complete.
         if form.is_complete():
-            await context.bot.send_message(
-                chat_id=user_id,
-                text=self.localization.get_string(form.lang, "application_complete")
-            )
             return
 
         # 9. Extract the user's response text and validate it.
